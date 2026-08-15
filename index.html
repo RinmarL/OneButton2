@@ -17,7 +17,7 @@
             --led-off: #1c1917;
         }
 
-        * {
+        *, *::before, *::after {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -31,13 +31,33 @@
             outline: none !important;
         }
 
-        button, div, span, h1, p, a {
+        html, body, #game-container, #button-area, .button-frame, #the-button, .btn-face-front, #digital-display, button, div, span, h1, p, a {
             -webkit-tap-highlight-color: transparent !important;
             -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
             -webkit-touch-callout: none !important;
             -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
             user-select: none !important;
             outline: none !important;
+            -webkit-focus-ring-color: transparent !important;
+        }
+
+        *:focus, *:active, *:hover, *:visited, *:focus-visible, *:focus-within {
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+            -webkit-touch-callout: none !important;
+            -webkit-focus-ring-color: transparent !important;
+        }
+
+        ::selection {
+            background: transparent !important;
+            color: inherit !important;
+        }
+        ::-moz-selection {
+            background: transparent !important;
+            color: inherit !important;
         }
 
         body, html {
@@ -880,10 +900,22 @@ function getEventPos(e) {
 
 // Global Handlers
 const handlers = {
-    down: (e) => { AudioSys.init(); STAGES[currentStage].down(e); },
-    up: (e) => { STAGES[currentStage].up(e); },
-    move: (e) => { STAGES[currentStage].move(e); },
-    winMove: (e) => { if(STAGES[currentStage].winMove) STAGES[currentStage].winMove(e); }
+    down: (e) => {
+        if (e.cancelable) e.preventDefault();
+        AudioSys.init();
+        STAGES[currentStage].down(e);
+    },
+    up: (e) => {
+        if (e.cancelable) e.preventDefault();
+        STAGES[currentStage].up(e);
+    },
+    move: (e) => {
+        if (e.cancelable) e.preventDefault();
+        STAGES[currentStage].move(e);
+    },
+    winMove: (e) => {
+        if(STAGES[currentStage].winMove) STAGES[currentStage].winMove(e);
+    }
 };
 
 btn.addEventListener('pointerdown', handlers.down);

@@ -365,3 +365,10 @@
 ### コンテキストメニュー（右クリック）の無効化
 
 - **変更点**: ゲーム画面上（PCでの右クリック、スマホでの長押しメニュー等）でコンテキストメニューが表示されないよう `contextmenu` イベントを無効化（`e.preventDefault()`）しました。
+
+## 2026-08-15 (スマホタップ時の青ハイライト完全無効化)
+### -webkit-focus-ring-color & e.preventDefault() によるタップエミュレーション防止
+
+- **変更点**: 
+  - CSSに `*, *::before, *::after`, `:focus`, `:active`, `::selection` 全般に対する `-webkit-tap-highlight-color: transparent !important`, `-webkit-focus-ring-color: transparent !important` を徹底適用。
+  - JSのポインターイベント時に `if (e.cancelable) e.preventDefault()` を追加し、モバイルブラウザによるネイティブタップハイライトおよびテキスト選択のエミュレーション動作を完全に遮断しました。
