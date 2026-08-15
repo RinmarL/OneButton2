@@ -1697,9 +1697,18 @@ const STAGES = {
                 const updateHoldLamp = () => {
                     if (!stageState.pressingBtn || stageState.cond5 || stageState.cleared) return;
                     const elapsed = Date.now() - stageState.holdStartTime;
-                    const progress = Math.min(elapsed / 3000, 1.0);
+                    const delay = 500; // 0.5秒の猶予
+                    const totalTime = 3000;
                     
-                    // 赤 (239, 68, 68) ➔ オレンジ ➔ 緑 (34, 197, 94) へ滑らかに遷移
+                    if (elapsed < delay) {
+                        // 最初の0.5秒間は赤色のまま維持
+                        stageState.holdAnim = requestAnimationFrame(updateHoldLamp);
+                        return;
+                    }
+                    
+                    const progress = Math.min((elapsed - delay) / (totalTime - delay), 1.0);
+                    
+                    // 0.5秒後から赤 ➔ オレンジ ➔ 緑 へ滑らかにじわーっと遷移
                     const r = Math.round(239 + (34 - 239) * progress);
                     const g = Math.round(68 + (197 - 68) * progress);
                     const b = Math.round(68 + (94 - 68) * progress);
