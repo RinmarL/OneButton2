@@ -1,0 +1,1780 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FACTORY ESCAPE</title>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --metal-base: #3f3f46;
+            --metal-light: #71717a;
+            --warning-yellow: #eab308;
+            --alert-red: #dc2626;
+            --led-green: #22c55e;
+            --led-orange: #f59e0b;
+            --led-red: #ef4444;
+            --led-off: #1c1917;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: #d4d4d8;
+            font-family: 'Courier New', Consolas, monospace;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        /* 画面エフェクト */
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 3px);
+            pointer-events: none; z-index: 9999;
+        }
+        .vignette {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.9) 120%);
+            pointer-events: none; z-index: 9998;
+        }
+
+        /* コンテナ */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* ヘッダー */
+        #header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--metal-base);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
+        }
+        .sector-info {
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .status-leds {
+            display: flex;
+            gap: 10px;
+        }
+        .led {
+            width: 15px; height: 15px;
+            border-radius: 50%;
+            background-color: var(--led-off);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+            border: 2px solid #000;
+        }
+        .led.active-green { background-color: var(--led-green); box-shadow: 0 0 10px var(--led-green); }
+        .led.active-orange { background-color: var(--led-orange); box-shadow: 0 0 10px var(--led-orange); }
+        .led.active-red { background-color: var(--led-red); box-shadow: 0 0 10px var(--led-red); }
+
+                /* 追加UI */
+        #digital-display {
+            width: 220px;
+            height: 55px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.1s;
+            margin-bottom: 40px;
+            z-index: 10;
+            cursor: grab;
+        }
+        .display-front {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            font-family: 'Courier New', Consolas, monospace;
+            font-size: 2.2rem;
+            font-weight: bold;
+            background: #111;
+            border: 2px solid #333;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+            letter-spacing: 2px;
+            display: flex; justify-content: center; align-items: center;
+            backface-visibility: hidden;
+        }
+        #digital-display.locked .display-front { color: var(--alert-red); text-shadow: 0 0 15px var(--alert-red); }
+        #digital-display.open .display-front { color: var(--led-green); text-shadow: 0 0 15px var(--led-green); }
+
+        .display-back {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #18181b;
+            border: 2px solid #52525b;
+            border-radius: 8px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 5px 15px rgba(0,0,0,0.6);
+            transform: rotateY(180deg);
+            backface-visibility: hidden;
+            display: flex; justify-content: center; align-items: center;
+            cursor: grab;
+        }
+        .real-red-switch {
+            width: 44px;
+            height: 44px;
+            background: radial-gradient(circle at 30% 30%, #4ade80, #16a34a 60%, #14532d);
+            border: 3px solid #15803d;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.6), inset 0 2px 4px rgba(255,255,255,0.4), 0 3px 0 #0f3d1e;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.05s, box-shadow 0.05s;
+        }
+        .real-red-switch:active {
+            transform: translateY(2px);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.9), inset 0 2px 5px rgba(0,0,0,0.6), 0 1px 0 #0f3d1e;
+        }
+        .real-red-switch .switch-text {
+            font-size: 0.72rem;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 2px #000;
+            pointer-events: none;
+        }
+
+        #transition-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 9000;
+            opacity: 1;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+
+        #sector-intro {
+            position: fixed; top: -100px; left: 0; width: 100%;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 15px var(--led-green);
+            z-index: 9500;
+            pointer-events: none;
+            opacity: 0;
+            letter-spacing: 3px;
+        }
+
+        .intro-anim {
+            animation: introSlide 3s ease forwards;
+        }
+        @keyframes introSlide {
+            0% { transform: translateY(0); opacity: 0; }
+            15% { transform: translateY(30vh); opacity: 1; }
+            75% { transform: translateY(30vh); opacity: 1; }
+            100% { transform: translateY(20vh); opacity: 0; }
+        }
+
+        /* 中央エリア */
+        #button-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            perspective: 1000px;
+        }
+
+        /* メインボタン枠（ハザードストライプ） */
+        .button-frame {
+            width: 250px;
+            height: 250px;
+            border-radius: 20px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-style: preserve-3d;
+            transition: transform 0.1s;
+        }
+
+        .frame-front {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 20px;
+            background: repeating-linear-gradient(45deg, #000, #000 15px, var(--warning-yellow) 15px, var(--warning-yellow) 30px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.9);
+            backface-visibility: hidden;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .frame-back {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 20px;
+            background: radial-gradient(circle at center, #27272a 0%, #18181b 100%);
+            border: 5px solid #3f3f46;
+            transform: rotateY(180deg);
+            backface-visibility: hidden;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 30px #000;
+            cursor: grab;
+        }
+
+        /* メインボタン本体 */
+        #the-button {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.1s;
+            transform-origin: center center;
+        }
+
+        .btn-face-front {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fca5a5, var(--alert-red) 60%, #7f1d1d);
+            border: 8px solid var(--metal-base);
+            box-shadow: 
+                inset 0px 5px 10px rgba(255,255,255,0.3),
+                inset 0px -10px 20px rgba(0,0,0,0.6),
+                0 10px 15px rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backface-visibility: hidden;
+            transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
+        }
+
+        .btn-face-front::after {
+            content: "PUSH";
+            font-size: 2rem;
+            font-weight: bold;
+            color: rgba(0,0,0,0.5);
+            text-shadow: 1px 1px 1px rgba(255,255,255,0.2);
+            position: absolute;
+            pointer-events: none;
+        }
+
+        /* 押下状態 */
+        #the-button.pressed .btn-face-front {
+            transform: translateY(6px) scale(0.98);
+            box-shadow: 
+                inset 0px 5px 15px rgba(0,0,0,0.8),
+                0 3px 5px rgba(0,0,0,0.8);
+        }
+
+        /* ログエリア */
+        #log-area {
+            height: 100px;
+            background-color: rgba(0,0,0,0.8);
+            border: 1px solid var(--metal-base);
+            padding: 10px;
+            overflow-y: hidden;
+            font-size: 0.9rem;
+            color: var(--led-green);
+            text-shadow: 0 0 3px var(--led-green);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        .log-entry {
+            margin: 2px 0;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .shake { animation: shake 0.5s; }
+        .shake-constant { animation: shake 0.1s infinite; }
+
+        /* ステージ固有のスタイル */
+        /* S2: Overheat */
+        #the-button.heat .btn-face-front {
+            background: radial-gradient(circle at 30% 30%, #fff, #f87171 40%, var(--alert-red));
+            box-shadow: 0 0 30px #f87171, inset 0 0 20px #fff;
+        }
+        /* S3: Pressure */
+        #pressure-meter {
+            position: absolute; bottom: -30px; left: 0; width: 100%; height: 10px;
+            background: #000; border: 1px solid var(--metal-base); display: none;
+        }
+        #pressure-fill { height: 100%; width: 0%; background: var(--led-red); transition: width 0.1s; }
+        
+                /* S7: Tighten Dial */
+        #the-button.btn-inactive .btn-face-front {
+            background: radial-gradient(circle at 30% 30%, #71717a, #3f3f46 60%, #18181b);
+            border-color: #27272a;
+            box-shadow: 
+                inset 0px 5px 10px rgba(255,255,255,0.1),
+                inset 0px -10px 20px rgba(0,0,0,0.8),
+                0 10px 15px rgba(0,0,0,0.7);
+            filter: grayscale(0.9);
+        }
+        #the-button.tightened-active .btn-face-front {
+            animation: tightenPulse 1s ease-in-out infinite alternate;
+        }
+        @keyframes tightenPulse {
+            from { box-shadow: 0 0 15px var(--alert-red), inset 0px 5px 10px rgba(255,255,255,0.3); }
+            to { box-shadow: 0 0 35px var(--alert-red), inset 0px 5px 15px rgba(255,255,255,0.6); }
+        }
+
+        /* S8: Friction */
+        .frost-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 20px;
+            background: radial-gradient(circle at center, rgba(225, 240, 255, 0.88) 15%, rgba(186, 220, 250, 0.92) 65%, rgba(147, 197, 253, 0.96));
+            backdrop-filter: blur(6px);
+            pointer-events: none;
+            display: none;
+            opacity: 1;
+            box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.9), 0 0 25px rgba(186, 230, 253, 0.7);
+            border: 3px solid rgba(255, 255, 255, 0.75);
+            z-index: 20;
+            transition: opacity 0.08s ease-out;
+        }
+        .ice-crystallize {
+            width: 100%; height: 100%;
+            background: repeating-linear-gradient(60deg, transparent, transparent 15px, rgba(255,255,255,0.2) 15px, rgba(255,255,255,0.2) 18px),
+                        repeating-linear-gradient(-60deg, transparent, transparent 20px, rgba(255,255,255,0.15) 20px, rgba(255,255,255,0.15) 22px);
+            border-radius: inherit;
+        }
+        /* S9: Overturn */
+        .frame-back {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            border-radius: 20px;
+            background: #1c1917;
+            border: 4px solid #44403c;
+            transform: rotateY(180deg) translateZ(1px);
+            backface-visibility: hidden;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            box-shadow: inset 0 0 30px #000;
+            z-index: 2;
+            cursor: grab;
+        }
+        .button-back {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #3f3f46, #27272a 60%, #18181b);
+            border: 8px solid #3f3f46;
+            transform: rotateY(180deg);
+            backface-visibility: hidden;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            box-shadow: inset 0 0 20px #000, 0 10px 15px rgba(0,0,0,0.7);
+            cursor: grab;
+        }
+        .dummy-green-switch {
+            width: 70px; height: 70px;
+            background: radial-gradient(circle at 30% 30%, #4ade80, #16a34a 60%, #14532d);
+            border: 4px solid #15803d;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5), inset 0 2px 4px rgba(255,255,255,0.4), 0 6px 0 #0f3d1e;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; user-select: none;
+            transition: transform 0.05s, box-shadow 0.05s;
+        }
+                .fake-green-switch {
+            width: 70px; height: 70px;
+            background: radial-gradient(circle at 30% 30%, #4ade80, #16a34a 60%, #14532d);
+            border: 4px solid #15803d;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5), inset 0 2px 4px rgba(255,255,255,0.4), 0 5px 0 #0f3d1e;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; user-select: none;
+            transition: transform 0.05s, box-shadow 0.05s;
+        }
+        .fake-green-switch:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), inset 0 2px 8px rgba(0,0,0,0.6), 0 2px 0 #0f3d1e;
+        }
+        .fake-green-switch .switch-text {
+            font-size: 0.85rem; font-weight: 900; color: #fff; text-shadow: 0 1px 2px #000; pointer-events: none; letter-spacing: 1px;
+        }
+        .dummy-green-switch:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), inset 0 2px 8px rgba(0,0,0,0.6), 0 2px 0 #0f3d1e;
+        }
+        .dummy-green-switch .switch-text {
+            font-size: 0.8rem; font-weight: bold; color: #fff; text-shadow: 0 1px 2px #000; pointer-events: none; letter-spacing: 1px;
+        }
+        .fake-switch {
+            width: 60px; height: 60px;
+            background: radial-gradient(circle at 30% 30%, #a1a1aa, #52525b 60%, #27272a);
+            border: 4px solid #3f3f46;
+            border-radius: 50%;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 5px 0 #18181b;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; user-select: none;
+            transition: transform 0.05s, box-shadow 0.05s;
+        }
+        .fake-switch:active {
+            transform: translateY(3px);
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 2px 0 #18181b;
+        }
+        .fake-switch .switch-text {
+            font-size: 0.75rem; font-weight: bold; color: #d4d4d8; text-shadow: 0 1px 2px #000; pointer-events: none;
+        }
+        
+        /* S10: Hydraulic Piston */
+        #the-button.seesaw-left {
+            transform: perspective(600px) rotateY(-18deg) scale(0.98) !important;
+        }
+        #the-button.seesaw-right {
+            transform: perspective(600px) rotateY(18deg) scale(0.98) !important;
+        }
+
+                /* スタート画面 */
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #1e1b18 0%, #0c0a09 80%, #000 100%);
+            z-index: 11000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        #start-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .start-content {
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            padding: 40px 30px;
+            background: rgba(18, 18, 20, 0.9);
+            border: 2px solid var(--metal-base);
+            border-radius: 16px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), inset 0 0 30px rgba(0, 0, 0, 0.8);
+            position: relative;
+            max-width: 90%;
+            width: 360px;
+        }
+        .start-title {
+            font-size: 3.6rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            margin: 0 0 30px 0;
+            text-shadow: 0 0 12px rgba(34, 197, 94, 0.8), 0 0 25px rgba(34, 197, 94, 0.4);
+            font-family: 'Bahnschrift', 'DIN Alternate', 'Franklin Gothic Medium', 'Arial Narrow', sans-serif-condensed, sans-serif;
+            font-stretch: condensed;
+            display: inline-block;
+            transform: scaleX(0.9);
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+        @keyframes titleGlow {
+            from { text-shadow: 0 0 10px rgba(34, 197, 94, 0.6), 0 0 20px rgba(34, 197, 94, 0.3); }
+            to { text-shadow: 0 0 20px rgba(34, 197, 94, 1), 0 0 40px rgba(34, 197, 94, 0.7); }
+        }
+        .digital-btn {
+            width: 100%;
+            padding: 16px 20px;
+            background: linear-gradient(180deg, #27272a, #18181b);
+            color: var(--led-green);
+            border: 2px solid var(--led-green);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1.3rem;
+            font-weight: bold;
+            letter-spacing: 4px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2), inset 0 0 15px rgba(34, 197, 94, 0.1);
+            transition: all 0.15s ease;
+        }
+        .digital-btn:hover {
+            background: linear-gradient(180deg, #15803d, #166534);
+            color: #fff;
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.6), inset 0 0 20px rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+        .digital-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+        }
+
+        /* クリア画面 */
+        #clear-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(10, 25, 18, 0.96) 0%, rgba(5, 5, 5, 0.98) 100%);
+            z-index: 10000;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            backdrop-filter: blur(8px);
+            animation: clearFadeIn 0.8s ease-out forwards;
+        }
+        @keyframes clearFadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .clear-card {
+            background: rgba(18, 24, 20, 0.92);
+            border: 2px solid rgba(34, 197, 94, 0.5);
+            border-radius: 20px;
+            padding: 48px 36px;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(34, 197, 94, 0.25), inset 0 0 30px rgba(0, 0, 0, 0.9);
+            max-width: 90%;
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .clear-badge {
+            font-size: 0.8rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: var(--led-green);
+            background: rgba(34, 197, 94, 0.12);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            margin-bottom: 20px;
+            text-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+        }
+        .clear-title-jp {
+            font-size: 3.2rem;
+            font-weight: 900;
+            color: #ffffff;
+            margin: 0 0 6px 0;
+            letter-spacing: 6px;
+            text-shadow: 0 0 20px rgba(34, 197, 94, 0.9), 0 0 40px rgba(34, 197, 94, 0.5);
+            font-family: 'Hiragino Sans', 'Meiryo', 'Noto Sans JP', sans-serif;
+        }
+        .clear-title-en {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--led-green);
+            margin: 0 0 20px 0;
+            text-shadow: 0 0 15px rgba(34, 197, 94, 0.8);
+            font-family: 'Bahnschrift', 'DIN Alternate', sans-serif;
+            font-stretch: condensed;
+        }
+        .clear-divider {
+            width: 80%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.4), transparent);
+            margin-bottom: 20px;
+        }
+        .clear-thanks {
+            font-size: 0.95rem;
+            color: #a1a1aa;
+            margin: 0 0 32px 0;
+            letter-spacing: 1px;
+            font-family: 'Hiragino Sans', 'Meiryo', 'Noto Sans JP', sans-serif;
+        }
+    </style>
+    <!-- Google Analytics (GA4) -->
+    <!-- 測定ID (G-XXXXXXXXXX) をここに設定してください -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MEASUREMENT_ID"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-MEASUREMENT_ID');
+      
+      // GA4 カスタムイベント送信ヘルパー
+      function trackGameEvent(name, params = {}) {
+          if (typeof gtag === 'function') {
+              gtag('event', name, params);
+          }
+      }
+    </script>
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div id="game-container">
+        <div id="header">
+            <div class="sector-info" id="sector-display">SECTOR 01/10</div>
+            <div class="status-leds">
+                <div class="led" id="led-1"></div>
+                <div class="led" id="led-2"></div>
+                <div class="led" id="led-3"></div>
+                <div class="led" id="led-4" style="display: none;"></div>
+                <div class="led" id="led-5" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div id="button-area">
+            <div id="digital-display" class="locked">
+                <div class="display-front" id="display-front-text">LOCKED</div>
+                <div class="display-back" id="display-back-panel">
+                    <div class="real-red-switch" id="b-real-red-switch">
+                        <span class="switch-text">OPEN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="button-frame" id="b-frame">
+                <div class="frame-front">
+                    <div id="the-button">
+                        <div class="btn-face-front"></div>
+                    </div>
+                </div>
+                <div class="frame-back" id="f-back">
+                    <div class="dummy-green-switch" id="b-dummy-green-switch">
+                        <span class="switch-text">OPEM</span>
+                    </div>
+                </div>
+                <div class="frost-overlay" id="frost">
+                    <div class="ice-crystallize"></div>
+                </div>
+                <div id="pressure-meter"><div id="pressure-fill"></div></div>
+            </div>
+
+        </div>
+
+        <div id="log-area"></div>
+    </div>
+
+    <div id="transition-overlay"></div>
+    <div id="sector-intro"></div>
+
+    <div id="start-screen">
+        <div class="start-content">
+            <h1 class="start-title">OneButton</h1>
+            <button id="start-btn" class="digital-btn">スタート</button>
+        </div>
+    </div>
+
+    <div id="clear-screen">
+        <div class="clear-card">
+            <div class="clear-badge">MISSION COMPLETE</div>
+            <h1 class="clear-title-jp">脱出成功</h1>
+            <h2 class="clear-title-en">Congratulations!</h2>
+            <div class="clear-divider"></div>
+            <p class="clear-thanks">ここまでのプレイありがとうございます</p>
+            <button id="retry-btn" class="digital-btn">タイトルへ戻る</button>
+        </div>
+    </div>
+
+
+
+<script>
+/** 
+ * Audio System (Web Audio API)
+ */
+const AudioSys = {
+    ctx: null,
+    init() {
+        if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+    },
+    playOsc(type, freq, dur, vol = 0.5) {
+        if(!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
+        osc.stop(this.ctx.currentTime + dur);
+    },
+    playNoise(dur, vol = 0.5, type = 'white') {
+        if(!this.ctx) return;
+        const bufferSize = this.ctx.sampleRate * dur;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        
+        // Filter for specific noises
+        const filter = this.ctx.createBiquadFilter();
+        if(type === 'steam') { filter.type = 'lowpass'; filter.frequency.value = 1000; }
+        if(type === 'spark') { filter.type = 'highpass'; filter.frequency.value = 5000; }
+        
+        const gain = this.ctx.createGain();
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        noise.start();
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
+    },
+    sfx: {
+        click() { AudioSys.playOsc('sine', 600, 0.05, 0.1); },
+        thud() { AudioSys.playOsc('sine', 100, 0.1, 0.2); },
+        steam() { AudioSys.playNoise(0.3, 0.1, 'steam'); },
+        buzzer() { AudioSys.playOsc('sawtooth', 150, 0.5, 0.5); AudioSys.playOsc('square', 152, 0.5, 0.5); },
+        spark() { AudioSys.playNoise(0.1, 0.5, 'spark'); },
+        iceCrackle() {
+            // 氷が解け・割れる繊細で小さなパキパキ音
+            const count = Math.floor(Math.random() * 2) + 2;
+            for (let i = 0; i < count; i++) {
+                const freq = 2200 + Math.random() * 1600;
+                const delay = i * (12 + Math.random() * 15);
+                const vol = 0.035 + Math.random() * 0.02; // 音は控えめで小さめ
+                setTimeout(() => {
+                    AudioSys.playOsc('triangle', freq, 0.018, vol);
+                }, delay);
+            }
+        },
+        break() { AudioSys.playNoise(0.3, 0.2, 'white'); AudioSys.playOsc('sawtooth', 50, 0.3, 0.2); },
+        success() { 
+            // OPEN時に鳴る、控えめでクリア感のあるデジタルサウンド
+            AudioSys.playOsc('sine', 1046.50, 0.1, 0.1); // C6
+            setTimeout(() => AudioSys.playOsc('sine', 1318.51, 0.15, 0.1), 100); // E6
+            setTimeout(() => AudioSys.playOsc('sine', 1567.98, 0.2, 0.1), 200); // G6
+        },
+        gameClear() {
+            // 脱出成功時の優しく澄んだ達成感サウンド（穏やかなクリスタルチャイム＆ぽわぁ〜んと広がる余韻）
+            if (!AudioSys.ctx) return;
+            const now = AudioSys.ctx.currentTime;
+            
+            // 1. 上品で優しいクリスタル・チャイム（ポ・ロ・ロ・ロ・ローン♪）
+            const arpeggio = [
+                { freq: 523.25, time: 0.00, dur: 1.8, vol: 0.045 }, // C5
+                { freq: 659.25, time: 0.08, dur: 2.0, vol: 0.045 }, // E5
+                { freq: 783.99, time: 0.16, dur: 2.2, vol: 0.045 }, // G5
+                { freq: 987.77, time: 0.24, dur: 2.4, vol: 0.035 }, // B5
+                { freq: 1046.50, time: 0.32, dur: 3.0, vol: 0.045 } // C6
+            ];
+            
+            arpeggio.forEach(n => {
+                const osc = AudioSys.ctx.createOscillator();
+                const gain = AudioSys.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(n.freq, now + n.time);
+                
+                gain.gain.setValueAtTime(0.0001, now + n.time);
+                gain.gain.exponentialRampToValueAtTime(n.vol, now + n.time + 0.03);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + n.time + n.dur);
+                
+                osc.connect(gain);
+                gain.connect(AudioSys.ctx.destination);
+                osc.start(now + n.time);
+                osc.stop(now + n.time + n.dur);
+            });
+
+            // 2. 背景に広がる極めて優しい「ぽわぁぁ〜」という温かい余韻パッド
+            const padNotes = [
+                { freq: 261.63, dur: 3.5, vol: 0.035 }, // C4
+                { freq: 392.00, dur: 3.8, vol: 0.030 }, // G4
+                { freq: 523.25, dur: 4.0, vol: 0.030 }, // C5
+                { freq: 659.25, dur: 4.2, vol: 0.020 }  // E5
+            ];
+
+            padNotes.forEach(p => {
+                const osc = AudioSys.ctx.createOscillator();
+                const gain = AudioSys.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(p.freq, now);
+                
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.exponentialRampToValueAtTime(p.vol, now + 0.5); // 0.5秒かけて優しく膨らむ
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + p.dur); // 長く静かにフェードアウト
+                
+                osc.connect(gain);
+                gain.connect(AudioSys.ctx.destination);
+                osc.start(now);
+                osc.stop(now + p.dur);
+            });
+        }
+    }
+};
+
+/**
+ * UI Controls
+ */
+const UI = {
+    logArea: document.getElementById('log-area'),
+    btnFrame: document.getElementById('b-frame'),
+    btn: document.getElementById('the-button'),
+    sectorDisp: document.getElementById('sector-display'),
+    leds: [document.getElementById('led-1'), document.getElementById('led-2'), document.getElementById('led-3'), document.getElementById('led-4'), document.getElementById('led-5')],
+    log(msg) {
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.textContent = `> ${msg}`;
+        this.logArea.appendChild(div);
+        if (this.logArea.children.length > 5) this.logArea.removeChild(this.logArea.firstChild);
+    },
+    setLED(index, color) {
+        this.leds[index].className = `led active-${color}`;
+    },
+    resetLEDs() {
+        this.leds.forEach(l => l.className = 'led active-red');
+    },
+    shake() {
+        document.body.classList.remove('shake');
+        void document.body.offsetWidth;
+        document.body.classList.add('shake');
+    }
+};
+
+/**
+ * Game Core
+ */
+let currentStage = 1;
+const MAX_STAGE = 11;
+let stageState = {}; 
+let animFrame = null;
+
+const btn = UI.btn;
+const frame = UI.btnFrame;
+const container = document.getElementById('game-container');
+
+// Event Normalize
+function getEventPos(e) {
+    if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+}
+
+// Global Handlers
+const handlers = {
+    down: (e) => { AudioSys.init(); STAGES[currentStage].down(e); },
+    up: (e) => { STAGES[currentStage].up(e); },
+    move: (e) => { STAGES[currentStage].move(e); },
+    winMove: (e) => { if(STAGES[currentStage].winMove) STAGES[currentStage].winMove(e); }
+};
+
+btn.addEventListener('pointerdown', handlers.down);
+document.addEventListener('pointerup', handlers.up);
+btn.addEventListener('pointermove', handlers.move);
+document.addEventListener('pointermove', handlers.winMove);
+
+// Next Stage Trigger
+function completeStage() {
+    AudioSys.sfx.success();
+    UI.log('ステージクリア。');
+    trackGameEvent('stage_clear', { stage: currentStage, stage_name: STAGE_NAMES[currentStage] || 'FINAL' });
+    if (currentStage >= MAX_STAGE) {
+        trackGameEvent('game_clear');
+    }
+    UI.leds.forEach((_, idx) => UI.setLED(idx, 'green'));
+    UI.btn.style.pointerEvents = 'none'; // disable temporarily
+    
+    const display = document.getElementById('digital-display');
+    const displayText = document.getElementById('display-front-text');
+    if (displayText) displayText.textContent = 'OPEN';
+    if (display) display.className = 'open';
+
+    // OPEN表記後、2秒待ってから暗転
+    setTimeout(() => {
+        document.getElementById('transition-overlay').style.opacity = '1';
+        
+        // 暗転完了(0.8秒)後に次のステージへ
+        setTimeout(() => {
+            if (currentStage >= MAX_STAGE) {
+                document.getElementById('clear-screen').style.display = 'flex';
+                document.getElementById('transition-overlay').style.opacity = '0';
+                AudioSys.sfx.gameClear();
+                return;
+            }
+            if(STAGES[currentStage].cleanup) STAGES[currentStage].cleanup();
+            currentStage++;
+            loadStage(currentStage);
+        }, 800);
+    }, 2000);
+}
+
+window.loadStage = loadStage;
+function loadStage(num) {
+    stageState = {};
+    if (num === 11) {
+        UI.sectorDisp.textContent = `SECTOR EX`;
+    } else {
+        UI.sectorDisp.textContent = `SECTOR ${num.toString().padStart(2, '0')}/10`;
+    }
+    UI.log(num === 11 ? `セクター EX をロード中...` : `セクター ${num} をロード中...`);
+    trackGameEvent('stage_start', { stage: num, stage_name: STAGE_NAMES[num] || 'FINAL' });
+    
+    // LEDランプの個数制御 (Stage 6, 10, 11は5個、その他は3個)
+    const led4 = document.getElementById('led-4');
+    const led5 = document.getElementById('led-5');
+    if (num === 6 || num === 10 || num === 11) {
+        if (led4) led4.style.display = 'block';
+        if (led5) led5.style.display = 'block';
+    } else {
+        if (led4) led4.style.display = 'none';
+        if (led5) led5.style.display = 'none';
+    }
+    
+    UI.resetLEDs();
+    UI.btn.style.pointerEvents = 'none'; // 暗転中・タイトル表示中は操作不可
+    
+    const display = document.getElementById('digital-display');
+    const displayText = document.getElementById('display-front-text');
+    if (displayText) displayText.textContent = 'LOCKED';
+    if (display) {
+        display.className = 'locked';
+        display.style.transform = '';
+        display.style.transformStyle = '';
+    }
+    
+    // Stage 9 以外では LOCKED裏のボタンを表示しない
+    const realRedSw = document.getElementById('b-real-red-switch');
+    if (realRedSw) {
+        realRedSw.style.display = (num === 9) ? 'flex' : 'none';
+    }
+
+    UI.btn.className = '';
+    UI.btn.style.transform = '';
+    UI.btn.style.transformStyle = '';
+    frame.style.transform = '';
+    frame.style.transformStyle = '';
+    frame.style.left = '';
+    frame.style.top = '';
+    document.getElementById('pressure-meter').style.display = 'none';
+    document.getElementById('frost').style.display = 'none';
+
+    // 1. 確実に真っ暗な状態でタイトルをアニメーション表示
+    document.getElementById('transition-overlay').style.opacity = '1';
+    const intro = document.getElementById('sector-intro');
+    if (intro) {
+        if (num === 11) {
+            intro.textContent = `SECTOR EX : FINAL`;
+        } else {
+            intro.textContent = `SECTOR ${num.toString().padStart(2, '0')} : ${STAGE_NAMES[num]}`;
+        }
+        intro.classList.remove('intro-anim');
+        void intro.offsetWidth;
+        intro.classList.add('intro-anim');
+    }
+
+    // 2. タイトル表示が終盤に差し掛かったら(2.0秒後)画面をフェードイン
+    setTimeout(() => {
+        document.getElementById('transition-overlay').style.opacity = '0';
+        
+        // 3. 画面が見えるようになったら(0.8秒後)操作開始
+        setTimeout(() => {
+            UI.btn.style.pointerEvents = 'auto';
+            if(STAGES[num].init) STAGES[num].init();
+        }, 800);
+    }, 2000);
+}
+
+/**
+ * Stage Logic
+ */
+const STAGE_NAMES = {
+    1: 'CONTACT', 2: 'OVERHEAT', 3: 'PRESSURE', 4: 'RECOIL', 5: 'STILLNESS',
+    6: 'MORSE', 7: 'TIGHTEN', 8: 'FRICTION', 9: 'OVERTURN', 10: 'HYDRAULIC',
+    11: 'FINAL'
+};
+const STAGES = {
+    // Stage 1: CONTACT (Tap)
+    1: {
+        init() {  },
+        down() { 
+            UI.btn.classList.add('pressed'); 
+            AudioSys.sfx.click(); 
+        },
+        up() { 
+            if(UI.btn.classList.contains('pressed')) {
+                UI.btn.classList.remove('pressed');
+                completeStage();
+            }
+        },
+        move() {}
+    },
+
+    // Stage 2: OVERHEAT (Hold 3s)
+    2: {
+        init() {  },
+        down() {
+            UI.btn.classList.add('pressed');
+            AudioSys.sfx.click();
+            UI.log('加熱中...');
+            
+            stageState.t1 = setTimeout(() => {
+                UI.setLED(0, 'green');
+            }, 1000);
+
+            stageState.t2 = setTimeout(() => {
+                UI.setLED(1, 'green');
+            }, 2000);
+
+            stageState.timer = setTimeout(() => {
+                UI.setLED(2, 'green');
+                UI.btn.classList.add('heat');
+                completeStage();
+            }, 3000);
+        },
+        up() {
+            UI.btn.classList.remove('pressed');
+            if(!UI.btn.classList.contains('heat')) {
+                clearTimeout(stageState.t1);
+                clearTimeout(stageState.t2);
+                clearTimeout(stageState.timer);
+                UI.log('加熱中断。');
+                UI.resetLEDs();
+            }
+        },
+        move() {},
+        cleanup() {
+            clearTimeout(stageState.t1);
+            clearTimeout(stageState.t2);
+            clearTimeout(stageState.timer);
+        }
+    },
+
+    // Stage 3: PRESSURE (Mash)
+    3: {
+        init() { 
+             
+            document.getElementById('pressure-meter').style.display = 'block';
+            stageState.pressure = 0;
+            
+            const loop = () => {
+                if(stageState.pressure > 0 && stageState.pressure < 100) {
+                    stageState.pressure -= 0.5; // Decay
+                    if(stageState.pressure < 0) stageState.pressure = 0;
+                    document.getElementById('pressure-fill').style.width = stageState.pressure + '%';
+                }
+                stageState.anim = requestAnimationFrame(loop);
+            };
+            loop();
+        },
+        down() {
+            if(stageState.pressure >= 100) return;
+            UI.btn.classList.add('pressed');
+            AudioSys.sfx.click();
+            stageState.pressure += 15;
+            if(stageState.pressure > 30) UI.setLED(0, 'orange');
+            if(stageState.pressure > 70) UI.setLED(1, 'orange');
+            
+            if(stageState.pressure >= 100) {
+                stageState.pressure = 100;
+                document.getElementById('pressure-fill').style.width = '100%';
+                cancelAnimationFrame(stageState.anim);
+                completeStage();
+            }
+        },
+        up() { UI.btn.classList.remove('pressed'); },
+        move() {},
+        cleanup() { cancelAnimationFrame(stageState.anim); }
+    },
+
+    // Stage 4: RECOIL (Drag down)
+    4: {
+        init() {  stageState.startY = 0; },
+        down(e) {
+            const p = getEventPos(e);
+            stageState.startY = p.y;
+            stageState.dragging = true;
+            AudioSys.sfx.click();
+        },
+        up() {
+            if(!stageState.dragging) return;
+            stageState.dragging = false;
+            const dist = stageState.currY || 0;
+            
+            if(dist > 120) {
+                // Release and smash
+                frame.style.transition = 'transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                frame.style.transform = `translateY(-50px)`;
+                completeStage();
+            } else {
+                frame.style.transition = 'transform 0.3s ease-out';
+                frame.style.transform = `translateY(0px)`;
+            }
+            stageState.currY = 0;
+        },
+        winMove(e) {
+            if(stageState.dragging) {
+                const p = getEventPos(e);
+                let dy = p.y - stageState.startY;
+                if(dy < 0) dy = 0;
+                if(dy > 150) dy = 150;
+                stageState.currY = dy;
+                frame.style.transition = 'none';
+                frame.style.transform = `translateY(${dy}px)`;
+            }
+        },
+        move() {}
+    },
+
+    // Stage 5: STILLNESS (Do nothing)
+    5: {
+        init() {
+            
+            const reset = () => {
+                if(stageState.done) return;
+                clearTimeout(stageState.timer);
+                UI.log('動体検知: リセット');
+                UI.resetLEDs();
+                UI.btn.classList.add('pressed');
+                setTimeout(()=>UI.btn.classList.remove('pressed'), 200);
+                startTimer();
+            };
+            const startTimer = () => {
+                stageState.timer = setTimeout(() => {
+                    stageState.done = true;
+                    completeStage();
+                }, 5000);
+            };
+            
+            stageState.handler = reset;
+            document.addEventListener('pointermove', stageState.handler);
+            document.addEventListener('pointerdown', stageState.handler);
+            startTimer();
+        },
+        down() {}, up() {}, move() {},
+        cleanup() {
+            document.removeEventListener('pointermove', stageState.handler);
+            document.removeEventListener('pointerdown', stageState.handler);
+            clearTimeout(stageState.timer);
+        }
+    },
+
+    // Stage 6: MORSE (Short-Short-Long-Short-Long)
+    6: {
+        init() {
+            stageState.input = [];
+            stageState.cleared = false;
+            
+            // 5個のランプが順に 短・短・長・短・長 で光るヒント
+            const hintSteps = [
+                { led: 0, duration: 250 }, // 短
+                { led: 1, duration: 250 }, // 短
+                { led: 2, duration: 700 }, // 長
+                { led: 3, duration: 250 }, // 短
+                { led: 4, duration: 700 }  // 長
+            ];
+            let step = 0;
+            const playHint = () => {
+                if (stageState.cleared) return;
+                for (let i = 0; i < 5; i++) UI.setLED(i, 'off');
+                
+                const current = hintSteps[step];
+                UI.setLED(current.led, 'orange');
+                
+                stageState.tOff = setTimeout(() => {
+                    UI.setLED(current.led, 'off');
+                    step = (step + 1) % hintSteps.length;
+                    const pause = (step === 0) ? 1200 : 200;
+                    stageState.tNext = setTimeout(playHint, pause);
+                }, current.duration);
+            };
+            playHint();
+        },
+        down() {
+            UI.btn.classList.add('pressed');
+            AudioSys.sfx.click();
+            stageState.tDown = Date.now();
+        },
+        up() {
+            UI.btn.classList.remove('pressed');
+            const dur = Date.now() - stageState.tDown;
+            const type = dur < 400 ? '.' : '-';
+            stageState.input.push(type);
+            UI.log(`シグナル: ${type}`);
+            
+            const target = ['.', '.', '-', '.', '-'];
+            let match = true;
+            for (let i = 0; i < stageState.input.length; i++) {
+                if (stageState.input[i] !== target[i]) {
+                    match = false;
+                    break;
+                }
+            }
+            
+            if (!match) {
+                stageState.input = [];
+                // シグナル拒否メッセージは非表示
+            } else if (stageState.input.length === target.length) {
+                stageState.cleared = true;
+                clearTimeout(stageState.tOff);
+                clearTimeout(stageState.tNext);
+                completeStage();
+            }
+        },
+        move() {},
+        cleanup() {
+            clearTimeout(stageState.tOff);
+            clearTimeout(stageState.tNext);
+        }
+    },
+
+    // Stage 7: TIGHTEN (Dial Tightening 360x3 deg)
+    7: {
+        init() {
+            stageState.totalAngle = 0;
+            stageState.isTightened = false;
+            stageState.lastAngle = null;
+            stageState.draggingDial = false;
+            
+            UI.btn.classList.add('btn-inactive');
+            
+            // 四角枠ドラッグで締め込み
+            stageState.frameDown = (e) => {
+                if (stageState.isTightened) return;
+                const rect = frame.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                const p = getEventPos(e);
+                
+                // ボタン外側の枠部分を押した時
+                const dist = Math.hypot(p.x - cx, p.y - cy);
+                if (dist > 80) {
+                    stageState.draggingDial = true;
+                    stageState.lastAngle = Math.atan2(p.y - cy, p.x - cx);
+                }
+            };
+            frame.addEventListener('pointerdown', stageState.frameDown);
+        },
+        down(e) {
+            if (!stageState.isTightened) {
+                // 未締め込み時はグレーで反応しない
+                AudioSys.playOsc('sine', 200, 0.04, 0.08);
+                return;
+            }
+            // 締め込み完了後は赤色ボタンを押下可能
+            UI.btn.classList.add('pressed');
+            AudioSys.sfx.click();
+        },
+        up() {
+            if (stageState.isTightened && UI.btn.classList.contains('pressed')) {
+                UI.btn.classList.remove('pressed');
+                completeStage();
+            }
+            stageState.draggingDial = false;
+            stageState.lastAngle = null;
+        },
+        move() {},
+        winMove(e) {
+            if (stageState.draggingDial && !stageState.isTightened) {
+                const rect = frame.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                const p = getEventPos(e);
+                const currAngle = Math.atan2(p.y - cy, p.x - cx);
+                
+                if (stageState.lastAngle !== null) {
+                    let delta = currAngle - stageState.lastAngle;
+                    // 角度の回り込み補正 (-PI ~ PI)
+                    while (delta > Math.PI) delta -= 2 * Math.PI;
+                    while (delta < -Math.PI) delta += 2 * Math.PI;
+                    
+                    const degDelta = delta * (180 / Math.PI);
+                    
+                    // 時計回りのみ進行
+                    if (degDelta > 0) {
+                        const prevAngle = stageState.totalAngle;
+                        stageState.totalAngle += degDelta;
+                        if (stageState.totalAngle > 1080) stageState.totalAngle = 1080;
+                        
+                        frame.style.transform = `rotate(${stageState.totalAngle}deg)`;
+                        
+                        // ラチェット音（45度毎）
+                        if (Math.floor(stageState.totalAngle / 45) > Math.floor(prevAngle / 45)) {
+                            AudioSys.playOsc('sine', 600 + (stageState.totalAngle / 1080) * 400, 0.03, 0.05);
+                        }
+                        
+                        // LED進行度表示
+                        if (stageState.totalAngle >= 1080) {
+                            UI.setLED(0, 'green'); UI.setLED(1, 'green'); UI.setLED(2, 'green');
+                        } else if (stageState.totalAngle >= 720) {
+                            UI.setLED(0, 'orange'); UI.setLED(1, 'orange'); UI.setLED(2, 'red');
+                        } else if (stageState.totalAngle >= 360) {
+                            UI.setLED(0, 'orange'); UI.setLED(1, 'red'); UI.setLED(2, 'red');
+                        }
+                        
+                        // 3回転完了でカチッと締まる
+                        if (stageState.totalAngle >= 1080 && !stageState.isTightened) {
+                            stageState.isTightened = true;
+                            AudioSys.sfx.thud();
+                            UI.btn.classList.remove('btn-inactive');
+                            UI.btn.classList.add('tightened-active');
+                        }
+                    }
+                }
+                stageState.lastAngle = currAngle;
+            }
+        },
+        cleanup() {
+            frame.removeEventListener('pointerdown', stageState.frameDown);
+            UI.btn.classList.remove('btn-inactive', 'tightened-active');
+            frame.style.transform = '';
+        }
+    },
+
+    // Stage 8: FRICTION (Rub)
+    8: {
+        init() {
+            const frost = document.getElementById('frost');
+            frost.style.display = 'block';
+            frost.style.opacity = 1;
+            stageState.rubs = 0;
+            stageState.lastX = null;
+            stageState.dir = null;
+            stageState.rubbing = false;
+
+            stageState.frameDown = () => { stageState.rubbing = true; };
+            frame.addEventListener('pointerdown', stageState.frameDown);
+        },
+        down() {},
+        up() {
+            stageState.rubbing = false;
+        },
+        move(e) {
+            this.handleRub(e);
+        },
+        winMove(e) {
+            if (stageState.rubbing) {
+                this.handleRub(e);
+            }
+        },
+        handleRub(e) {
+            const p = getEventPos(e);
+            if (stageState.lastX !== null) {
+                const dx = p.x - stageState.lastX;
+                if (Math.abs(dx) > 6) {
+                    const newDir = dx > 0 ? 1 : -1;
+                    if (stageState.dir !== newDir && stageState.dir !== null) {
+                        stageState.rubs++;
+                        AudioSys.sfx.iceCrackle(); // 小さなパキパキ音
+                        const opacity = 1 - (stageState.rubs / 15);
+                        document.getElementById('frost').style.opacity = opacity > 0 ? opacity : 0;
+                        if (stageState.rubs % 5 === 0) UI.setLED(stageState.rubs / 5 - 1, 'orange');
+                        
+                        if (stageState.rubs >= 15) {
+                            completeStage();
+                        }
+                    }
+                    stageState.dir = newDir;
+                }
+            }
+            stageState.lastX = p.x;
+        },
+        cleanup() {
+            document.getElementById('frost').style.display = 'none';
+            frame.removeEventListener('pointerdown', stageState.frameDown);
+        }
+    },
+
+    // Stage 9: OVERTURN (3D Flip: Frame & Button rotate as 1 unit)
+    9: {
+        init() {
+            stageState.frameRot = 0;
+            stageState.displayRot = 0;
+            stageState.currFrameRot = 0;
+            stageState.currDisplayRot = 0;
+            stageState.dragging = false;
+            stageState.dragTarget = null;
+            
+            frame.style.transformStyle = 'preserve-3d';
+            
+            const display = document.getElementById('digital-display');
+            if (display) display.style.transformStyle = 'preserve-3d';
+            
+            // 1. 本物ボタン（LOCKED枠の裏：緑色 OPEN）
+            const realRedSw = document.getElementById('b-real-red-switch');
+            stageState.realRedHandler = (e) => {
+                e.stopPropagation();
+                AudioSys.sfx.click();
+                completeStage();
+            };
+            realRedSw.addEventListener('pointerdown', stageState.realRedHandler);
+            
+            // 2. ダミーボタン（四角枠の裏：緑色 OPEM）
+            const dummyGreenSw = document.getElementById('b-dummy-green-switch');
+            stageState.dummyGreenHandler = (e) => {
+                e.stopPropagation();
+                AudioSys.sfx.click();
+                UI.log('よくみたらOPEMだった...');
+            };
+            dummyGreenSw.addEventListener('pointerdown', stageState.dummyGreenHandler);
+
+            // 3. LOCKED表示枠のドラッグ
+            if (display) {
+                stageState.displayDown = (e) => {
+                    if (e.target !== realRedSw) {
+                        stageState.startX = getEventPos(e).x;
+                        stageState.dragging = true;
+                        stageState.dragTarget = 'display';
+                    }
+                };
+                display.addEventListener('pointerdown', stageState.displayDown);
+            }
+
+            // 4. 四角枠＆ボタンのドラッグ（枠の表裏）
+            stageState.frameDown = (e) => {
+                if (e.target !== dummyGreenSw) {
+                    stageState.startX = getEventPos(e).x;
+                    stageState.dragging = true;
+                    stageState.dragTarget = 'frame';
+                }
+            };
+            frame.addEventListener('pointerdown', stageState.frameDown);
+        },
+        down(e) {
+            UI.btn.classList.add('pressed');
+            AudioSys.sfx.click();
+            stageState.startX = getEventPos(e).x;
+            stageState.dragging = true;
+            stageState.dragTarget = 'frame';
+        },
+        up() { 
+            UI.btn.classList.remove('pressed');
+            if (stageState.currFrameRot !== undefined) stageState.frameRot = stageState.currFrameRot;
+            if (stageState.currDisplayRot !== undefined) stageState.displayRot = stageState.currDisplayRot;
+            stageState.dragging = false; 
+            stageState.dragTarget = null;
+        },
+        winMove(e) {
+            if (stageState.dragging) {
+                const dx = getEventPos(e).x - stageState.startX;
+                if (stageState.dragTarget === 'frame') {
+                    let ang = (stageState.frameRot || 0) + dx * 0.6;
+                    frame.style.transform = `rotateY(${ang}deg)`;
+                    stageState.currFrameRot = ang;
+                } else if (stageState.dragTarget === 'display') {
+                    const display = document.getElementById('digital-display');
+                    let ang = (stageState.displayRot || 0) + dx * 0.6;
+                    if (display) display.style.transform = `rotateY(${ang}deg)`;
+                    stageState.currDisplayRot = ang;
+                }
+            }
+        },
+        move() {},
+        cleanup() {
+            document.getElementById('b-real-red-switch').removeEventListener('pointerdown', stageState.realRedHandler);
+            document.getElementById('b-dummy-green-switch').removeEventListener('pointerdown', stageState.dummyGreenHandler);
+            
+            const display = document.getElementById('digital-display');
+            if (display) {
+                display.removeEventListener('pointerdown', stageState.displayDown);
+                display.style.transform = '';
+            }
+            
+            frame.removeEventListener('pointerdown', stageState.frameDown);
+            frame.style.transform = '';
+        }
+    },
+
+    // Stage 10: HYDRAULIC (Alternate Left/Right Taps: 1往復毎に1ランプ点灯)
+    10: {
+        init() {
+            stageState.taps = 0;
+            stageState.lastSide = null;
+            stageState.cleared = false;
+            UI.resetLEDs();
+        },
+        down(e) {
+            if (stageState.cleared) return;
+            
+            const p = getEventPos(e);
+            const rect = UI.btn.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const side = p.x < cx ? 'left' : 'right';
+            
+            // 物理フィードバック（傾き）
+            UI.btn.classList.remove('seesaw-left', 'seesaw-right');
+            if (side === 'left') {
+                UI.btn.classList.add('seesaw-left');
+            } else {
+                UI.btn.classList.add('seesaw-right');
+            }
+            
+            if (stageState.lastSide === null) {
+                // 1回目のタップ（片道）
+                stageState.lastSide = side;
+                stageState.taps = 1;
+                AudioSys.sfx.thud();
+            } else if (stageState.lastSide !== side) {
+                // 交互タップ成功
+                stageState.lastSide = side;
+                stageState.taps++;
+                AudioSys.sfx.thud();
+                
+                // 1往復（2タップ）ごとにランプ1個点灯
+                const completedRounds = Math.floor(stageState.taps / 2);
+                for (let i = 0; i < 5; i++) {
+                    if (i < completedRounds) {
+                        UI.setLED(i, 'green');
+                    } else {
+                        UI.setLED(i, 'red');
+                    }
+                }
+                
+                // 5往復（10タップ）で5個点灯・解錠
+                if (completedRounds >= 5) {
+                    stageState.cleared = true;
+                    completeStage();
+                }
+            } else {
+                // 同じ側を押してしまった（交互失敗）➔ ランプリセット
+                stageState.taps = 0;
+                stageState.lastSide = null;
+                UI.resetLEDs();
+                AudioSys.playOsc('sine', 200, 0.08, 0.1);
+            }
+        },
+        up() {
+            setTimeout(() => {
+                if (!stageState.cleared) {
+                    UI.btn.classList.remove('seesaw-left', 'seesaw-right');
+                }
+            }, 120);
+        },
+        move() {},
+        cleanup() {
+            UI.btn.classList.remove('seesaw-left', 'seesaw-right');
+        }
+    },
+
+    // Stage 11: FINAL (Sector EX: 5 Missions & 5 Lamps)
+    11: {
+        init() {
+            stageState.clicks = 0;
+            stageState.cond1 = false; // 1: 3回押す (LED 0)
+            stageState.cond2 = false; // 2: 10回押す (LED 1)
+            stageState.cond3 = false; // 3: 3番目のランプをクリック (LED 2)
+            stageState.cond4 = false; // 4: LOCKEDを時計回り3回転 (LED 3)
+            stageState.cond5 = false; // 5: 3秒長押し (LED 4)
+            
+            stageState.displayAngle = 0;
+            stageState.lastDisplayAngle = null;
+            stageState.draggingDisplay = false;
+            stageState.holdTimer = null;
+            stageState.cleared = false;
+            
+            UI.resetLEDs();
+            
+            // 条件判定共通関数
+            stageState.checkAll = () => {
+                if (stageState.cleared) return;
+                if (stageState.cond1 && stageState.cond2 && stageState.cond3 && stageState.cond4 && stageState.cond5) {
+                    stageState.cleared = true;
+                    clearTimeout(stageState.holdTimer);
+                    completeStage();
+                }
+            };
+            
+            // 3: 3番目にあたるランプ（#led-3）をクリック可能に設定
+            stageState.led3Click = (e) => {
+                e.stopPropagation();
+                if (!stageState.cond3 && !stageState.cleared) {
+                    stageState.cond3 = true;
+                    UI.setLED(2, 'green');
+                    AudioSys.sfx.click();
+                    stageState.checkAll();
+                }
+            };
+            UI.leds[2].style.cursor = 'pointer';
+            UI.leds[2].addEventListener('pointerdown', stageState.led3Click);
+            
+            // 4: LOCKED表示枠の時計回りドラッグ
+            const display = document.getElementById('digital-display');
+            if (display) {
+                stageState.displayDown = (e) => {
+                    const rect = display.getBoundingClientRect();
+                    const cx = rect.left + rect.width / 2;
+                    const cy = rect.top + rect.height / 2;
+                    const p = getEventPos(e);
+                    stageState.draggingDisplay = true;
+                    stageState.lastDisplayAngle = Math.atan2(p.y - cy, p.x - cx);
+                };
+                display.addEventListener('pointerdown', stageState.displayDown);
+            }
+        },
+        down(e) {
+            if (stageState.cleared) return;
+            UI.btn.classList.add('pressed');
+            AudioSys.sfx.click();
+            
+            stageState.clicks++;
+            
+            // 条件1: ボタンを3回押す
+            if (stageState.clicks >= 3 && !stageState.cond1) {
+                stageState.cond1 = true;
+                UI.setLED(0, 'green');
+                AudioSys.sfx.thud();
+                stageState.checkAll();
+            }
+            
+            // 条件2: ボタンを10回押す
+            if (stageState.clicks >= 10 && !stageState.cond2) {
+                stageState.cond2 = true;
+                UI.setLED(1, 'green');
+                AudioSys.sfx.thud();
+                stageState.checkAll();
+            }
+            
+            // 条件5: 3秒長押しタイマー
+            if (!stageState.cond5) {
+                clearTimeout(stageState.holdTimer);
+                stageState.holdTimer = setTimeout(() => {
+                    if (!stageState.cond5 && !stageState.cleared) {
+                        stageState.cond5 = true;
+                        UI.setLED(4, 'green');
+                        AudioSys.sfx.thud();
+                        stageState.checkAll();
+                    }
+                }, 3000);
+            }
+        },
+        up() {
+            UI.btn.classList.remove('pressed');
+            clearTimeout(stageState.holdTimer);
+            stageState.draggingDisplay = false;
+            stageState.lastDisplayAngle = null;
+        },
+        move() {},
+        winMove(e) {
+            // 条件4: LOCKEDを時計回りにドラッグして3回転（累積1080度）
+            if (stageState.draggingDisplay && !stageState.cleared) {
+                const display = document.getElementById('digital-display');
+                const rect = display.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                const p = getEventPos(e);
+                const currAngle = Math.atan2(p.y - cy, p.x - cx);
+                
+                if (stageState.lastDisplayAngle !== null) {
+                    let delta = currAngle - stageState.lastDisplayAngle;
+                    while (delta > Math.PI) delta -= 2 * Math.PI;
+                    while (delta < -Math.PI) delta += 2 * Math.PI;
+                    
+                    const degDelta = delta * (180 / Math.PI);
+                    
+                    // 時計回りのみ進行
+                    if (degDelta > 0) {
+                        const prevAngle = stageState.displayAngle;
+                        stageState.displayAngle += degDelta;
+                        
+                        display.style.transform = `rotate(${stageState.displayAngle}deg)`;
+                        
+                        // 45度毎にラチェット音
+                        if (Math.floor(stageState.displayAngle / 45) > Math.floor(prevAngle / 45)) {
+                            AudioSys.playOsc('sine', 700 + Math.min(stageState.displayAngle / 1080, 1) * 300, 0.03, 0.05);
+                        }
+                        
+                        if (stageState.displayAngle >= 1080 && !stageState.cond4) {
+                            stageState.cond4 = true;
+                            UI.setLED(3, 'green');
+                            AudioSys.sfx.thud();
+                            stageState.checkAll();
+                        }
+                    }
+                }
+                stageState.lastDisplayAngle = currAngle;
+            }
+        },
+        cleanup() {
+            clearTimeout(stageState.holdTimer);
+            UI.leds[2].style.cursor = '';
+            UI.leds[2].removeEventListener('pointerdown', stageState.led3Click);
+            
+            const display = document.getElementById('digital-display');
+            if (display) {
+                display.removeEventListener('pointerdown', stageState.displayDown);
+                display.style.transform = '';
+            }
+        }
+    }
+};
+
+// Start Setup
+window.showClearScreen = () => {
+    AudioSys.init();
+    AudioSys.sfx.gameClear();
+    const cs = document.getElementById('clear-screen');
+    const ss = document.getElementById('start-screen');
+    const to = document.getElementById('transition-overlay');
+    if (ss) ss.style.display = 'none';
+    if (to) to.style.opacity = '0';
+    if (cs) {
+        cs.style.display = 'flex';
+        cs.style.opacity = '1';
+        cs.style.visibility = 'visible';
+        cs.style.zIndex = '999999';
+    }
+};
+
+window.onload = () => {
+    const startScreen = document.getElementById('start-screen');
+    const startBtn = document.getElementById('start-btn');
+    
+    // Start Button
+    startBtn.addEventListener('click', () => {
+        AudioSys.init();
+        AudioSys.sfx.click();
+        
+        trackGameEvent('game_start');
+        
+        // スタート画面をフェードアウト
+        startScreen.classList.add('hidden');
+        
+        // スタート画面が消えた後（500ms後）にセクター01のタイトル表示＆暗転明けを開始
+        setTimeout(() => {
+            currentStage = 1;
+            loadStage(currentStage);
+        }, 500);
+    });
+
+    // ?clear がURLについていたら即座にクリア画面を表示
+    if (new URLSearchParams(window.location.search).has('clear')) {
+        window.showClearScreen();
+    }
+
+    // ?stage=11 または ?ex で直接セクターEXを起動して動作確認
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('stage') || urlParams.has('ex')) {
+        AudioSys.init();
+        const targetStage = (urlParams.get('stage') === 'ex' || urlParams.has('ex')) ? 11 : parseInt(urlParams.get('stage')) || 1;
+        startScreen.classList.add('hidden');
+        startScreen.style.display = 'none';
+        currentStage = targetStage;
+        loadStage(currentStage);
+    }
+
+    // Retry / Reboot
+    document.getElementById('retry-btn').addEventListener('click', () => {
+        document.getElementById('clear-screen').style.display = 'none';
+        startScreen.style.display = 'flex';
+        startScreen.classList.remove('hidden');
+        
+        UI.btn.style.visibility = 'visible';
+        UI.btn.className = '';
+    });
+};
+</script>
+</body>
+</html>
+
+
+
+
