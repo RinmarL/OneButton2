@@ -847,6 +847,7 @@ let currentStage = 1;
 const MAX_STAGE = 11;
 let stageState = {}; 
 let animFrame = null;
+let stageTransitioning = false;
 
 const btn = UI.btn;
 const frame = UI.btnFrame;
@@ -875,6 +876,8 @@ document.addEventListener('pointermove', handlers.winMove);
 
 // Next Stage Trigger
 function completeStage() {
+    if (stageTransitioning) return;
+    stageTransitioning = true;
     AudioSys.sfx.success();
     UI.log('ステージクリア。');
     trackGameEvent('stage_clear', { stage: currentStage, stage_name: STAGE_NAMES[currentStage] || 'FINAL' });
@@ -910,7 +913,18 @@ function completeStage() {
 
 window.loadStage = loadStage;
 function loadStage(num) {
+    stageTransitioning = false;
     stageState = {};
+    
+    // 全LEDのカーソルとクリックイベントを安全に初期化
+    UI.leds.forEach(l => {
+        if (l) {
+            l.style.cursor = 'default';
+            l.onpointerdown = null;
+            l.style.backgroundColor = '';
+            l.style.boxShadow = '';
+        }
+    });
     if (num === 11) {
         UI.sectorDisp.textContent = `SECTOR EX`;
     } else {
@@ -1011,29 +1025,34 @@ const STAGES = {
 
     // Stage 2: OVERHEAT (Hold 3s)
     2: {
-        init() {  },
+        init() { stageState.pressing = false; },
         down() {
+            stageState.pressing = true;
             UI.btn.classList.add('pressed');
             AudioSys.sfx.click();
             UI.log('加熱中...');
             
             stageState.t1 = setTimeout(() => {
-                UI.setLED(0, 'green');
+                if (stageState.pressing) UI.setLED(0, 'green');
             }, 1000);
 
             stageState.t2 = setTimeout(() => {
-                UI.setLED(1, 'green');
+                if (stageState.pressing) UI.setLED(1, 'green');
             }, 2000);
 
             stageState.timer = setTimeout(() => {
-                UI.setLED(2, 'green');
-                UI.btn.classList.add('heat');
-                completeStage();
+                if (stageState.pressing) {
+                    UI.setLED(2, 'green');
+                    UI.btn.classList.add('heat');
+                    completeStage();
+                }
             }, 3000);
         },
         up() {
+            if (!stageState.pressing) return;
+            stageState.pressing = false;
             UI.btn.classList.remove('pressed');
-            if(!UI.btn.classList.contains('heat')) {
+            if (!UI.btn.classList.contains('heat')) {
                 clearTimeout(stageState.t1);
                 clearTimeout(stageState.t2);
                 clearTimeout(stageState.timer);
@@ -1043,6 +1062,7 @@ const STAGES = {
         },
         move() {},
         cleanup() {
+            stageState.pressing = false;
             clearTimeout(stageState.t1);
             clearTimeout(stageState.t2);
             clearTimeout(stageState.timer);
@@ -1058,7 +1078,7 @@ const STAGES = {
             
             const loop = () => {
                 if(stageState.pressure > 0 && stageState.pressure < 100) {
-                    stageState.pressure -= 0.5; // Decay
+                    stageState.pressure -= 0.25; // Decay (半分速度に緩和)
                     if(stageState.pressure < 0) stageState.pressure = 0;
                     document.getElementById('pressure-fill').style.width = stageState.pressure + '%';
                 }
@@ -1128,33 +1148,58 @@ const STAGES = {
     // Stage 5: STILLNESS (Do nothing)
     5: {
         init() {
-            
-            const reset = () => {
-                if(stageState.done) return;
-                clearTimeout(stageState.timer);
-                UI.log('動体検知: リセット');
-                UI.resetLEDs();
-                UI.btn.classList.add('pressed');
-                setTimeout(()=>UI.btn.classList.remove('pressed'), 200);
-                startTimer();
+            stageState.isMoving = false;
+            stageState.stillTimer = null;
+            stageState.stopDebounce = null;
+            stageState.done = false;
+
+            const onMovement = () => {
+                if (stageState.done) return;
+                clearTimeout(stageState.stillTimer);
+                
+                // 動いている最中は最初だけ「動体検知中」を出力
+                if (!stageState.isMoving) {
+                    stageState.isMoving = true;
+                    UI.log('動体検知中');
+                    UI.resetLEDs();
+                }
+                
+                // 動きが止まったかを判定（300ms操作なしで停止と判定）
+                clearTimeout(stageState.stopDebounce);
+                stageState.stopDebounce = setTimeout(() => {
+                    if (stageState.done) return;
+                    stageState.isMoving = false;
+                    UI.log('動体未確認');
+                    
+                    // 5秒間静止カウント開始
+                    stageState.stillTimer = setTimeout(() => {
+                        if (!stageState.isMoving && !stageState.done) {
+                            stageState.done = true;
+                            completeStage();
+                        }
+                    }, 5000);
+                }, 300);
             };
-            const startTimer = () => {
-                stageState.timer = setTimeout(() => {
-                    stageState.done = true;
-                    completeStage();
-                }, 5000);
-            };
-            
-            stageState.handler = reset;
+
+            stageState.handler = onMovement;
             document.addEventListener('pointermove', stageState.handler);
             document.addEventListener('pointerdown', stageState.handler);
-            startTimer();
+
+            // 開始時
+            UI.log('動体未確認');
+            stageState.stillTimer = setTimeout(() => {
+                if (!stageState.isMoving && !stageState.done) {
+                    stageState.done = true;
+                    completeStage();
+                }
+            }, 5000);
         },
         down() {}, up() {}, move() {},
         cleanup() {
             document.removeEventListener('pointermove', stageState.handler);
             document.removeEventListener('pointerdown', stageState.handler);
-            clearTimeout(stageState.timer);
+            clearTimeout(stageState.stillTimer);
+            clearTimeout(stageState.stopDebounce);
         }
     },
 
@@ -1357,6 +1402,7 @@ const STAGES = {
             }
         },
         handleRub(e) {
+            if (stageState.cleared) return;
             const p = getEventPos(e);
             if (stageState.lastX !== null) {
                 const dx = p.x - stageState.lastX;
@@ -1369,7 +1415,8 @@ const STAGES = {
                         document.getElementById('frost').style.opacity = opacity > 0 ? opacity : 0;
                         if (stageState.rubs % 5 === 0) UI.setLED(stageState.rubs / 5 - 1, 'orange');
                         
-                        if (stageState.rubs >= 15) {
+                        if (stageState.rubs >= 15 && !stageState.cleared) {
+                            stageState.cleared = true;
                             completeStage();
                         }
                     }
@@ -1393,6 +1440,7 @@ const STAGES = {
             stageState.currDisplayRot = 0;
             stageState.dragging = false;
             stageState.dragTarget = null;
+            stageState.cleared = false;
             
             frame.style.transformStyle = 'preserve-3d';
             
@@ -1403,6 +1451,9 @@ const STAGES = {
             const realRedSw = document.getElementById('b-real-red-switch');
             stageState.realRedHandler = (e) => {
                 e.stopPropagation();
+                e.preventDefault();
+                if (stageState.cleared) return;
+                stageState.cleared = true;
                 AudioSys.sfx.click();
                 completeStage();
             };
@@ -1412,6 +1463,7 @@ const STAGES = {
             const dummyGreenSw = document.getElementById('b-dummy-green-switch');
             stageState.dummyGreenHandler = (e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 AudioSys.sfx.click();
                 UI.log('よくみたらOPEMだった...');
             };
@@ -1429,9 +1481,9 @@ const STAGES = {
                 display.addEventListener('pointerdown', stageState.displayDown);
             }
 
-            // 4. 四角枠＆ボタンのドラッグ（枠の表裏）
+            // 4. 四角枠＆ボタンのドラッグ
             stageState.frameDown = (e) => {
-                if (e.target !== dummyGreenSw) {
+                if (e.target !== dummyGreenSw && !e.target.closest('#the-button')) {
                     stageState.startX = getEventPos(e).x;
                     stageState.dragging = true;
                     stageState.dragTarget = 'frame';
@@ -1470,8 +1522,11 @@ const STAGES = {
         },
         move() {},
         cleanup() {
-            document.getElementById('b-real-red-switch').removeEventListener('pointerdown', stageState.realRedHandler);
-            document.getElementById('b-dummy-green-switch').removeEventListener('pointerdown', stageState.dummyGreenHandler);
+            const realRedSw = document.getElementById('b-real-red-switch');
+            if (realRedSw) realRedSw.removeEventListener('pointerdown', stageState.realRedHandler);
+            
+            const dummyGreenSw = document.getElementById('b-dummy-green-switch');
+            if (dummyGreenSw) dummyGreenSw.removeEventListener('pointerdown', stageState.dummyGreenHandler);
             
             const display = document.getElementById('digital-display');
             if (display) {
@@ -1568,7 +1623,7 @@ const STAGES = {
             stageState.displayAngle = 0;
             stageState.lastDisplayAngle = null;
             stageState.draggingDisplay = false;
-            stageState.holdTimer = null;
+            stageState.pressingBtn = false;
             stageState.cleared = false;
             
             UI.resetLEDs();
@@ -1578,7 +1633,7 @@ const STAGES = {
                 if (stageState.cleared) return;
                 if (stageState.cond1 && stageState.cond2 && stageState.cond3 && stageState.cond4 && stageState.cond5) {
                     stageState.cleared = true;
-                    clearTimeout(stageState.holdTimer);
+                    cancelAnimationFrame(stageState.holdAnim);
                     completeStage();
                 }
             };
@@ -1600,6 +1655,7 @@ const STAGES = {
             const display = document.getElementById('digital-display');
             if (display) {
                 stageState.displayDown = (e) => {
+                    if (stageState.cond4) return; // 達成後は回転不可
                     const rect = display.getBoundingClientRect();
                     const cx = rect.left + rect.width / 2;
                     const cy = rect.top + rect.height / 2;
@@ -1616,6 +1672,8 @@ const STAGES = {
             AudioSys.sfx.click();
             
             stageState.clicks++;
+            stageState.pressingBtn = true;
+            stageState.holdStartTime = Date.now();
             
             // 条件1: ボタンを3回押す
             if (stageState.clicks >= 3 && !stageState.cond1) {
@@ -1633,29 +1691,62 @@ const STAGES = {
                 stageState.checkAll();
             }
             
-            // 条件5: 3秒長押しタイマー
+            // 条件5: 3秒長押し（ランプ5がじわーっと点灯）
             if (!stageState.cond5) {
-                clearTimeout(stageState.holdTimer);
-                stageState.holdTimer = setTimeout(() => {
-                    if (!stageState.cond5 && !stageState.cleared) {
+                cancelAnimationFrame(stageState.holdAnim);
+                const updateHoldLamp = () => {
+                    if (!stageState.pressingBtn || stageState.cond5 || stageState.cleared) return;
+                    const elapsed = Date.now() - stageState.holdStartTime;
+                    const progress = Math.min(elapsed / 3000, 1.0);
+                    
+                    // 赤 (239, 68, 68) ➔ オレンジ ➔ 緑 (34, 197, 94) へ滑らかに遷移
+                    const r = Math.round(239 + (34 - 239) * progress);
+                    const g = Math.round(68 + (197 - 68) * progress);
+                    const b = Math.round(68 + (94 - 68) * progress);
+                    const led5 = UI.leds[4];
+                    if (led5) {
+                        led5.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                        led5.style.boxShadow = `0 0 ${Math.round(progress * 15)}px rgb(${r}, ${g}, ${b})`;
+                    }
+                    
+                    if (progress >= 1.0) {
                         stageState.cond5 = true;
                         UI.setLED(4, 'green');
+                        if (led5) {
+                            led5.style.backgroundColor = '';
+                            led5.style.boxShadow = '';
+                        }
                         AudioSys.sfx.thud();
                         stageState.checkAll();
+                    } else {
+                        stageState.holdAnim = requestAnimationFrame(updateHoldLamp);
                     }
-                }, 3000);
+                };
+                stageState.holdAnim = requestAnimationFrame(updateHoldLamp);
             }
         },
         up() {
             UI.btn.classList.remove('pressed');
-            clearTimeout(stageState.holdTimer);
+            stageState.pressingBtn = false;
+            cancelAnimationFrame(stageState.holdAnim);
+            
+            // 3秒達成前に離したらランプ5だけリセット
+            if (!stageState.cond5) {
+                const led5 = UI.leds[4];
+                if (led5) {
+                    led5.className = 'led active-red';
+                    led5.style.backgroundColor = '';
+                    led5.style.boxShadow = '';
+                }
+            }
+            
             stageState.draggingDisplay = false;
             stageState.lastDisplayAngle = null;
         },
         move() {},
         winMove(e) {
             // 条件4: LOCKEDを時計回りにドラッグして3回転（累積1080度）
-            if (stageState.draggingDisplay && !stageState.cleared) {
+            if (stageState.draggingDisplay && !stageState.cond4 && !stageState.cleared) {
                 const display = document.getElementById('digital-display');
                 const rect = display.getBoundingClientRect();
                 const cx = rect.left + rect.width / 2;
@@ -1682,8 +1773,12 @@ const STAGES = {
                             AudioSys.playOsc('sine', 700 + Math.min(stageState.displayAngle / 1080, 1) * 300, 0.03, 0.05);
                         }
                         
+                        // 1080度達成でランプ4点灯＆以降回転停止
                         if (stageState.displayAngle >= 1080 && !stageState.cond4) {
                             stageState.cond4 = true;
+                            stageState.displayAngle = 1080;
+                            display.style.transform = 'rotate(1080deg)';
+                            stageState.draggingDisplay = false;
                             UI.setLED(3, 'green');
                             AudioSys.sfx.thud();
                             stageState.checkAll();
@@ -1694,8 +1789,14 @@ const STAGES = {
             }
         },
         cleanup() {
-            clearTimeout(stageState.holdTimer);
-            UI.leds[2].style.cursor = '';
+            cancelAnimationFrame(stageState.holdAnim);
+            const led5 = UI.leds[4];
+            if (led5) {
+                led5.style.backgroundColor = '';
+                led5.style.boxShadow = '';
+            }
+            
+            UI.leds[2].style.cursor = 'default';
             UI.leds[2].removeEventListener('pointerdown', stageState.led3Click);
             
             const display = document.getElementById('digital-display');
