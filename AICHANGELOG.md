@@ -372,3 +372,8 @@
 - **変更点**: 
   - CSSに `*, *::before, *::after`, `:focus`, `:active`, `::selection` 全般に対する `-webkit-tap-highlight-color: transparent !important`, `-webkit-focus-ring-color: transparent !important` を徹底適用。
   - JSのポインターイベント時に `if (e.cancelable) e.preventDefault()` を追加し、モバイルブラウザによるネイティブタップハイライトおよびテキスト選択のエミュレーション動作を完全に遮断しました。
+
+## 2026-08-15 (Stage 05 ボタンクリック挙動の改善)
+### クリック時の押し込みアニメーション＆クリックSEの追加
+
+- **変更点**: Stage 05（STILLNESS）において、ボタンを押した際に沈み込むアニメーション（`.pressed`）とクリック効果音（`AudioSys.sfx.click()`）が正常に再生されるよう `down()` および `up()` ハンドラーを実装しました。

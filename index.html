@@ -628,8 +628,7 @@
             font-family: 'Hiragino Sans', 'Meiryo', 'Noto Sans JP', sans-serif;
         }
     </style>
-    <!-- Google Analytics (GA4) -->
-    <!-- 測定ID (G-XXXXXXXXXX) をここに設定してください -->
+    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BQJLEPW2S7"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -1246,7 +1245,14 @@ const STAGES = {
                 }
             }, 5000);
         },
-        down() {}, up() {}, move() {},
+        down() {
+            UI.btn.classList.add('pressed');
+            AudioSys.sfx.click();
+        },
+        up() {
+            UI.btn.classList.remove('pressed');
+        },
+        move() {},
         cleanup() {
             document.removeEventListener('pointermove', stageState.handler);
             document.removeEventListener('pointerdown', stageState.handler);
