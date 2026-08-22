@@ -357,9 +357,9 @@ const STAGES = {
                 if (stageState.val === 0 || stageState.val === 100) stageState.hold = 0;
                 
                 // LED反映
-                if(stageState.hold > 1) UI.setLED(0, 'orange'); else UI.setLED(0, 'red');
-                if(stageState.hold > 2) UI.setLED(1, 'orange'); else UI.setLED(1, 'red');
-                if(stageState.hold > 2.8) UI.setLED(2, 'orange'); else UI.setLED(2, 'red');
+                if(stageState.hold > 1) UI.setLED(0, 'green'); else UI.setLED(0, 'red');
+                if(stageState.hold > 2) UI.setLED(1, 'green'); else UI.setLED(1, 'red');
+                if(stageState.hold > 2.8) UI.setLED(2, 'green'); else UI.setLED(2, 'red');
 
                 stageState.anim = requestAnimationFrame(loop);
             };
@@ -726,6 +726,7 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
 
