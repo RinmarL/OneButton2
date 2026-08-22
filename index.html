@@ -87,20 +87,24 @@
         .chip { width: 45px; height: 45px; background: #1e293b; border: 2px solid var(--core-cyan); border-radius: 8px; color: var(--core-cyan); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; cursor: grab; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
 
         /* LOG AREA */
-        #log-area {
+        #log-wrapper {
             height: 100px;
             background-color: rgba(0,0,0,0.8);
             border: 1px solid var(--metal-base);
             padding: 10px;
-            overflow-y: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
             font-size: 0.9rem;
             color: var(--led-green);
             text-shadow: 0 0 3px var(--led-green);
+            position: relative;
+            z-index: 5;
+        }
+        #log-area {
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
-            position: relative;
-            z-index: 5;
+            min-height: 100%;
         }
         .log-entry { margin: 2px 0; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
@@ -167,7 +171,7 @@
             </div>
         </div>
         <div id="fukidashi">『 対策済み 』</div>
-        <div id="log-area"></div>
+        <div id="log-wrapper"><div id="log-area"></div></div>
     </div>
     <div id="transition-overlay"></div>
     <div id="sector-intro"></div>
@@ -222,7 +226,8 @@ const UI = {
         div.className = 'log-entry';
         div.textContent = `> ${msg}`;
         this.logArea.appendChild(div);
-        if (this.logArea.children.length > 5) this.logArea.removeChild(this.logArea.firstChild);
+        const wrapper = document.getElementById('log-wrapper');
+        if(wrapper) wrapper.scrollTop = wrapper.scrollHeight;
     },
     clearLog() { this.logArea.innerHTML = ''; },
     setLED(index, color) { if(this.leds[index]) this.leds[index].className = `led active-${color}`; },
@@ -518,6 +523,7 @@ const STAGES = {
             const err1 = document.createElement('div'); err1.className='log-entry'; err1.style.color='#ef4444'; err1.textContent='> エラー: データ破損を検知'; la.appendChild(err1);
             const err2 = document.createElement('div'); err2.className='log-entry'; err2.style.color='#ef4444'; err2.textContent='> 起動コマンドを入れてください'; la.appendChild(err2);
             
+            document.getElementById('log-wrapper').scrollTop = document.getElementById('log-wrapper').scrollHeight;
             stageState.seq = 0; stageState.t = 0; stageState.drag = false;
         },
         down(e) {
@@ -698,6 +704,8 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
+
 
 
 
