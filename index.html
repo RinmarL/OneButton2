@@ -35,7 +35,7 @@
         #digital-display { width: 220px; height: 55px; position: relative; transform-style: preserve-3d; margin-bottom: 40px; z-index: 10; cursor: grab; }
         .display-front, .display-back { position: absolute; top: 0; left: 0; width: 100%; height: 100%; font-size: 2.2rem; font-weight: bold; border-radius: 8px; display: flex; justify-content: center; align-items: center; backface-visibility: hidden; }
         .display-front { background: #111; border: 2px solid #333; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); color: var(--alert-red); text-shadow: 0 0 15px var(--alert-red); letter-spacing: 2px; }
-        .display-front.open { color: var(--led-cyan); text-shadow: 0 0 15px var(--led-cyan); }
+        .display-front.open { color: var(--led-green); text-shadow: 0 0 15px var(--led-green), 0 0 30px var(--led-green); }
         .display-back { background: #18181b; border: 2px solid #52525b; transform: rotateY(180deg); }
         .char-target { border-bottom: 2px solid transparent; }
         .char-target.socket-active { text-shadow: 0 0 15px var(--led-orange); color: var(--led-orange); border-bottom: 2px solid var(--led-orange); }
@@ -87,7 +87,7 @@
         .chip { width: 45px; height: 45px; background: #1e293b; border: 2px solid var(--core-cyan); border-radius: 8px; color: var(--core-cyan); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; cursor: grab; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
 
         /* LOG AREA */
-        #log-wrapper { height: 120px; background-color: rgba(0,0,0,0.8); border: 1px solid var(--metal-base); padding: 10px; overflow-y: auto; overflow-x: hidden; font-size: 0.9rem; color: var(--led-cyan); text-shadow: 0 0 3px var(--led-cyan); position: relative; z-index: 5;}
+        #log-wrapper { height: 120px; background-color: rgba(0,0,0,0.8); border: 1px solid var(--metal-base); padding: 10px; overflow-y: auto; overflow-x: hidden; font-size: 1.1rem; color: var(--led-green); text-shadow: 0 0 5px rgba(34,197,94,0.6); font-family: "Courier New", Courier, monospace; font-weight: bold; position: relative; z-index: 5;}
         #log-area { display: flex; flex-direction: column; justify-content: flex-end; min-height: 100%; }
         .log-entry { margin: 2px 0; }
 
@@ -237,11 +237,11 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 
 function completeStage() {
     if (stageTransitioning) return; stageTransitioning = true;
-    AudioSys.sfx.success(); UI.log('SECTOR CLEARED.');
+    AudioSys.sfx.success(); UI.log('ステージクリア。');
     UI.leds.forEach((_, idx) => UI.setLED(idx, 'green'));
     UI.btn.style.pointerEvents = 'none';
     const disp = document.getElementById('digital-display'); const dispText = document.getElementById('display-front-text');
-    if (dispText) dispText.textContent = 'OPEN'; if (disp) disp.classList.add('open');
+    if (dispText) { dispText.textContent = 'OPEN'; dispText.classList.add('open'); } if (disp) disp.classList.add('open');
     setTimeout(() => {
         document.getElementById('transition-overlay').style.opacity = '1';
         setTimeout(() => {
@@ -260,7 +260,7 @@ function loadStage(num) {
     stageTransitioning = false; stageState = {};
     UI.leds.forEach(l => { if(l){ l.style.cursor='default'; l.onpointerdown=null; l.style.backgroundColor=''; l.style.boxShadow=''; } });
     const sName = num === 11 ? "FINAL" : STAGE_NAMES[num]; UI.sectorDisp.innerHTML = num === 11 ? `SECT<span id="char-o1" class="char-target">O</span>REX FINAL` : `SECT<span id="char-o1" class="char-target">O</span>R${num.toString().padStart(2, '0')} ${sName}`;
-    UI.log(num === 11 ? `SECTOR EX BOOTING...` : `SECTOR ${num} BOOTING...`);
+    UI.log(num === 11 ? `セクター EX をロード中...` : `セクター ${num} をロード中...`);
     const l4 = document.getElementById('led-4'); const l5 = document.getElementById('led-5');
     if (num === 11) { if(l4) l4.style.display='block'; if(l5) l5.style.display='block'; }
     else { if(l4) l4.style.display='none'; if(l5) l5.style.display='none'; }
@@ -268,7 +268,7 @@ function loadStage(num) {
     
     // UI Reset
     const disp = document.getElementById('digital-display'); const dispText = document.getElementById('display-front-text');
-    if(dispText) dispText.innerHTML = 'L<span id="char-o2" class="char-target">O</span>CKED';
+    if(dispText) { dispText.innerHTML = 'L<span id="char-o2" class="char-target">O</span>CKED'; dispText.classList.remove('open'); }
     if(disp) { disp.className = 'locked'; disp.style.transform = ''; }
     UI.btn.className = ''; UI.btn.style.transform = ''; frame.style.transform = ''; frame.style.left = ''; frame.style.top = '';
     document.getElementById('btn-text').textContent = 'PUSH';
@@ -354,7 +354,7 @@ const STAGES = {
         down() {
             UI.btn.classList.add('pressed'); AudioSys.sfx.click();
             if (!stageState.started) {
-                stageState.started = true; stageState.startTime = performance.now(); UI.log('TIMER STARTED');
+                stageState.started = true; stageState.startTime = performance.now(); UI.log('タイマー作動');
                 const loop = (t) => {
                     if (stageState.done || !stageState.started) return;
                     const el = (t - stageState.startTime) / 1000;
@@ -368,7 +368,7 @@ const STAGES = {
                 const el = (performance.now() - stageState.startTime) / 1000;
                 stageState.done = true;
                 if (el >= 2.8 && el <= 3.2) { document.getElementById('btn-text').textContent = 'JUST'; completeStage(); }
-                else { AudioSys.sfx.buzz(); UI.log(`FAILED: ${el.toFixed(2)}s`); stageState.started = false; document.getElementById('btn-text').textContent = 'READY'; }
+                else { AudioSys.sfx.buzz(); UI.log(`失敗: ${el.toFixed(2)}秒`); stageState.started = false; document.getElementById('btn-text').textContent = 'READY'; }
             }
         },
         up() { UI.btn.classList.remove('pressed'); },
@@ -390,7 +390,7 @@ const STAGES = {
                 let dir = '';
                 if (Math.abs(dx) > Math.abs(dy)) { dir = dx > 0 ? 'right' : 'left'; } else { dir = dy > 0 ? 'down' : 'up'; }
                 if (dir === stageState.seq[stageState.idx]) {
-                    stageState.idx++; AudioSys.sfx.beep(); UI.log(`FLICK: ${dir.toUpperCase()}`);
+                    stageState.idx++; AudioSys.sfx.beep(); UI.log(`フリック: ${dir.toUpperCase()}`);
                     if (stageState.idx <= 3) UI.setLED(stageState.idx-1, 'orange');
                     stageState.startX = p.x; stageState.startY = p.y;
                     if (stageState.idx >= stageState.seq.length) { stageState.dragging = false; completeStage(); }
@@ -420,9 +420,9 @@ const STAGES = {
                     const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
                     if (dist < 100) {
                         stageState.sum += parseInt(stageState.dragging.dataset.val);
-                        stageState.dragging.remove(); AudioSys.sfx.thud(); UI.log(`LOADED: +${stageState.dragging.dataset.val} (TOTAL: ${stageState.sum})`);
+                        stageState.dragging.remove(); AudioSys.sfx.thud(); UI.log(`ロード完了: +${stageState.dragging.dataset.val} (合計: ${stageState.sum})`);
                         if (stageState.sum === 10) completeStage();
-                        else if (stageState.sum > 10) { AudioSys.sfx.buzz(); UI.log('OVERFLOW'); STAGES[5].init(); } // Reset
+                        else if (stageState.sum > 10) { AudioSys.sfx.buzz(); UI.log('オーバーフロー発生'); STAGES[5].init(); } // Reset
                     } else { stageState.dragging.style.position=''; stageState.dragging.style.left=''; stageState.dragging.style.top=''; }
                     stageState.dragging = null;
                 }
@@ -439,10 +439,10 @@ const STAGES = {
             stageState.cuts = 0; stageState.power = false; stageState.rot = 0; stageState.dragF = false;
             document.querySelectorAll('.cut-wire').forEach(w => {
                 w.classList.remove('cut');
-                w.onpointerenter = (e) => { if(e.buttons>0 && !w.classList.contains('cut')){ w.classList.add('cut'); AudioSys.sfx.glass(); stageState.cuts++; UI.log(`WIRE CUT (${stageState.cuts}/4)`); } };
+                w.onpointerenter = (e) => { if(e.buttons>0 && !w.classList.contains('cut')){ w.classList.add('cut'); AudioSys.sfx.glass(); stageState.cuts++; UI.log(`ワイヤー切断 (${stageState.cuts}/4)`); } };
             });
             const bSw = document.getElementById('back-switch');
-            bSw.onpointerdown = (e) => { e.stopPropagation(); if(stageState.cuts>=4 && !stageState.power){ bSw.className='switch-on'; bSw.textContent='ON'; stageState.power=true; AudioSys.sfx.thud(); UI.log('POWER ON'); UI.btn.classList.remove('disabled'); } };
+            bSw.onpointerdown = (e) => { e.stopPropagation(); if(stageState.cuts>=4 && !stageState.power){ bSw.className='switch-on'; bSw.textContent='ON'; stageState.power=true; AudioSys.sfx.thud(); UI.log('電源オン'); UI.btn.classList.remove('disabled'); } };
             stageState.downF = (e) => { if(e.target.closest('#the-button')) return; stageState.sx = getEventPos(e).x; stageState.dragF = true; };
             stageState.upF = () => { stageState.dragF = false; stageState.rot = stageState.curRot || stageState.rot; };
             stageState.moveF = (e) => { if(stageState.dragF){ const dx = getEventPos(e).x - stageState.sx; let ang = stageState.rot + dx*0.6; frame.style.transform = `rotateY(${ang}deg)`; stageState.curRot = ang; } };
@@ -468,8 +468,8 @@ const STAGES = {
                 
                 const tgt = stageState.seq[stageState.idx];
                 if(tgt && Math.abs(stageState.angle) >= Math.abs(tgt) && Math.sign(stageState.angle)===Math.sign(tgt)) {
-                    stageState.idx++; stageState.angle=0; AudioSys.sfx.thud(); UI.log(`CODE ACCEPTED: ${stageState.idx}/5`);
-                    if(stageState.idx===5) { UI.btn.classList.remove('disabled'); UI.log('READY TO PUSH'); }
+                    stageState.idx++; stageState.angle=0; AudioSys.sfx.thud(); UI.log(`コード承認: ${stageState.idx}/5`);
+                    if(stageState.idx===5) { UI.btn.classList.remove('disabled'); UI.log('プッシュ準備完了'); }
                 }
             };
             frame.addEventListener('pointerdown', stageState.downD); document.addEventListener('pointerup', stageState.upD); document.addEventListener('pointermove', stageState.moveD);
@@ -484,9 +484,9 @@ const STAGES = {
             document.getElementById('barrier').style.display='block'; document.getElementById('reboot-btn').style.display='block';
             stageState.rebooting = false; stageState.open = false;
             document.getElementById('reboot-btn').onpointerdown = (e) => {
-                e.stopPropagation(); if(stageState.rebooting) return; stageState.rebooting = true; AudioSys.sfx.beep(); UI.log('REBOOT SEQUENCE STARTED...');
-                setTimeout(() => { document.getElementById('barrier').style.display='none'; stageState.open=true; UI.log('BARRIER DOWN'); }, 500);
-                setTimeout(() => { document.getElementById('barrier').style.display='block'; stageState.open=false; UI.log('SYSTEM REBOOTED'); stageState.rebooting=false; }, 1000);
+                e.stopPropagation(); if(stageState.rebooting) return; stageState.rebooting = true; AudioSys.sfx.beep(); UI.log('再起動シーケンス開始...');
+                setTimeout(() => { document.getElementById('barrier').style.display='none'; stageState.open=true; UI.log('バリア解除'); }, 500);
+                setTimeout(() => { document.getElementById('barrier').style.display='block'; stageState.open=false; UI.log('システム再起動完了'); stageState.rebooting=false; }, 1000);
             };
         },
         down() { if(stageState.open) { UI.btn.classList.add('pressed'); AudioSys.sfx.click(); completeStage(); } else { AudioSys.sfx.buzz(); } },
@@ -498,9 +498,9 @@ const STAGES = {
         init() {
             const la = UI.logArea; la.innerHTML='';
             for(let i=0; i<30; i++) { const d=document.createElement('div'); d.className='log-entry'; d.textContent=`> [SYS] TRACE LOG ${Math.floor(Math.random()*9000)}`; la.appendChild(d); }
-            const hint = document.createElement('div'); hint.className='log-entry'; hint.style.color='#f97316'; hint.textContent='> [BOOT_LOG]: PUSH -> FLICK RIGHT -> HOLD 2s'; la.appendChild(hint);
+            const hint = document.createElement('div'); hint.className='log-entry'; hint.style.color='#f97316'; hint.textContent='> [BOOT_LOG]: 押し込む -> 右へフリック -> 2秒間ホールド'; la.appendChild(hint);
             for(let i=0; i<10; i++) { const d=document.createElement('div'); d.className='log-entry'; d.textContent=`> [DATA] 0x${Math.floor(Math.random()*65535).toString(16)}`; la.appendChild(d); }
-            const err1 = document.createElement('div'); err1.className='log-entry'; err1.style.color='#ef4444'; err1.textContent='> ERROR: CORRUPTED DATA'; la.appendChild(err1);
+            const err1 = document.createElement('div'); err1.className='log-entry'; err1.style.color='#ef4444'; err1.textContent='> エラー: データ破損を検知'; la.appendChild(err1);
             const err2 = document.createElement('div'); err2.className='log-entry'; err2.style.color='#ef4444'; err2.textContent='> 起動コマンドを入れてください'; la.appendChild(err2);
             document.getElementById('log-wrapper').scrollTop = document.getElementById('log-wrapper').scrollHeight;
             stageState.seq = 0; stageState.t = 0; stageState.drag = false;
@@ -556,7 +556,7 @@ const STAGES = {
                     });
                     if(hit>=0 && !stageState.conns.includes(hit)) {
                         stageState.conns[stageState.dragL] = hit; AudioSys.sfx.thud(); socks[hit].classList.add('socket-active'); UI.setLED(stageState.dragL, 'orange');
-                        if(!stageState.conns.includes(null)) { UI.btn.classList.remove('disabled'); UI.log('ALL SOCKETS CONNECTED'); AudioSys.sfx.buzz(); }
+                        if(!stageState.conns.includes(null)) { UI.btn.classList.remove('disabled'); UI.log('全ソケット接続完了'); AudioSys.sfx.buzz(); }
                     }
                     stageState.dragL = -1; draw();
                 }
@@ -570,7 +570,7 @@ const STAGES = {
     // 11: FINAL (EX)
     11: {
         init() {
-            UI.log('[BOOT] SECTOR-EX EMERGENCY PROTOCOL LOADED.');
+            UI.log('[BOOT] セクターEX 緊急プロトコル・ロード完了。');
             UI.log('[SYS_MEMO]: 横断歩道は気を付けて渡ること'); UI.log('[SYS_MEMO]: 右を見て、左を見て、もう1度右を見て進むこと');
             UI.log('[SYS_MEMO]: 10110111');
             
@@ -683,5 +683,6 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
