@@ -96,8 +96,8 @@
 
         #transition-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9000; opacity: 1; pointer-events: none; transition: opacity 0.8s ease; }
         #sector-intro { position: fixed; top: -100px; left: 0; width: 100%; text-align: center; font-size: 2rem; font-weight: bold; color: #fff; text-shadow: 0 0 15px var(--core-cyan); z-index: 9500; pointer-events: none; opacity: 0; letter-spacing: 3px; }
-        .intro-anim { animation: introSlide 3s ease forwards; }
-        @keyframes introSlide { 0% { transform: translateY(0); opacity: 0; } 15% { transform: translateY(30vh); opacity: 1; } 75% { transform: translateY(30vh); opacity: 1; } 100% { transform: translateY(20vh); opacity: 0; } }
+        .intro-anim { animation: introSlide 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        @keyframes introSlide { 0% { transform: translateY(0) scale(1); opacity: 0; } 15% { transform: translateY(30vh) scale(1.2); opacity: 1; text-shadow: 0 0 20px var(--core-cyan), 0 0 40px var(--core-cyan); } 70% { transform: translateY(30vh) scale(1.2); opacity: 1; text-shadow: 0 0 20px var(--core-cyan), 0 0 40px var(--core-cyan); } 100% { transform: translate(-30vw, -10vh) scale(0.4); opacity: 0; filter: blur(2px); } } @keyframes flashText { 0% { opacity: 0; filter: brightness(3) blur(2px); transform: translateX(-10px); } 100% { opacity: 1; filter: brightness(1) blur(0); transform: translateX(0); } }
 
                 #start-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #0a0e17 0%, #000 80%); z-index: 11000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s ease; }
         .start-content { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 30px; background: rgba(18, 18, 20, 0.9); border: 2px solid var(--metal-base); border-radius: 16px; box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), inset 0 0 30px rgba(0, 0, 0, 0.8); position: relative; max-width: 90%; width: 360px; }
@@ -259,7 +259,7 @@ function completeStage() {
 function loadStage(num) {
     stageTransitioning = false; stageState = {};
     UI.leds.forEach(l => { if(l){ l.style.cursor='default'; l.onpointerdown=null; l.style.backgroundColor=''; l.style.boxShadow=''; } });
-    UI.sectorDisp.innerHTML = num === 11 ? `SECTOR EX` : `SECT<span id="char-o1" class="char-target">O</span>R ${num.toString().padStart(2, '0')}/10`;
+    UI.sectorDisp.style.opacity = "0"; UI.sectorDisp.style.animation = "none";
     UI.log(num === 11 ? `SECTOR EX BOOTING...` : `SECTOR ${num} BOOTING...`);
     const l4 = document.getElementById('led-4'); const l5 = document.getElementById('led-5');
     if (num === 11) { if(l4) l4.style.display='block'; if(l5) l5.style.display='block'; }
@@ -291,6 +291,11 @@ function loadStage(num) {
         intro.textContent = num === 11 ? `SECTOR EX : FINAL` : `SECTOR ${num.toString().padStart(2, '0')} : ${STAGE_NAMES[num]}`;
         intro.classList.remove('intro-anim'); void intro.offsetWidth; intro.classList.add('intro-anim');
     }
+    setTimeout(() => {
+        const sName = num === 11 ? 'FINAL' : STAGE_NAMES[num];
+        UI.sectorDisp.innerHTML = num === 11 ? `SECTOR EX [FINAL]` : `SECT<span id="char-o1" class="char-target">O</span>R ${num.toString().padStart(2, '0')} [${sName}]`;
+        UI.sectorDisp.style.animation = 'flashText 0.4s ease-out forwards';
+    }, 2400);
     setTimeout(() => {
         document.getElementById('transition-overlay').style.opacity = '0';
         setTimeout(() => {
@@ -683,4 +688,6 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
+
 
