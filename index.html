@@ -259,7 +259,7 @@ function completeStage() {
 function loadStage(num) {
     stageTransitioning = false; stageState = {};
     UI.leds.forEach(l => { if(l){ l.style.cursor='default'; l.onpointerdown=null; l.style.backgroundColor=''; l.style.boxShadow=''; } });
-    UI.sectorDisp.innerHTML = num === 11 ? `SECTOR EX` : `SECT<span id="char-o1" class="char-target">O</span>R ${num.toString().padStart(2, '0')}/10`;
+    const sName = num === 11 ? "FINAL" : STAGE_NAMES[num]; UI.sectorDisp.innerHTML = num === 11 ? `SECT<span id="char-o1" class="char-target">O</span>REX FINAL` : `SECT<span id="char-o1" class="char-target">O</span>R${num.toString().padStart(2, '0')} ${sName}`;
     UI.log(num === 11 ? `SECTOR EX BOOTING...` : `SECTOR ${num} BOOTING...`);
     const l4 = document.getElementById('led-4'); const l5 = document.getElementById('led-5');
     if (num === 11) { if(l4) l4.style.display='block'; if(l5) l5.style.display='block'; }
@@ -683,4 +683,5 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
