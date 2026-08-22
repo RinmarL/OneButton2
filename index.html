@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -99,11 +99,12 @@
         .intro-anim { animation: introSlide 3s ease forwards; }
         @keyframes introSlide { 0% { transform: translateY(0); opacity: 0; } 15% { transform: translateY(30vh); opacity: 1; } 75% { transform: translateY(30vh); opacity: 1; } 100% { transform: translateY(20vh); opacity: 0; } }
 
-        #start-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; z-index: 11000; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s, visibility 0.5s; }
-        .start-content { background: #1a1a1a; padding: 40px 60px; border-radius: 15px; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.05); text-align: center; border: 1px solid #333; }
-        .start-title { font-size: 3.5rem; color: #fff; text-shadow: 0 0 15px var(--core-cyan), 0 0 30px var(--core-cyan); margin-bottom: 40px; font-weight: bold; letter-spacing: 2px; }
-        .digital-btn { padding: 15px 40px; background: #222; color: var(--core-cyan); border: 2px solid var(--core-cyan); border-radius: 8px; font-size: 1.5rem; font-weight: bold; cursor: pointer; transition: all 0.2s; }
-        .digital-btn:hover { background: rgba(0, 240, 255, 0.1); box-shadow: 0 0 20px var(--core-cyan); color: #fff; }
+                #start-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #0a0e17 0%, #000 80%); z-index: 11000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s ease; }
+        .start-content { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 30px; background: rgba(18, 18, 20, 0.9); border: 2px solid var(--metal-base); border-radius: 16px; box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), inset 0 0 30px rgba(0, 0, 0, 0.8); position: relative; max-width: 90%; width: 360px; }
+        .start-title { font-size: 3.6rem; font-weight: 700; letter-spacing: 0.5px; color: #ffffff; margin: 0 0 30px 0; text-shadow: 0 0 12px rgba(0, 240, 255, 0.8), 0 0 25px rgba(0, 240, 255, 0.4); font-family: 'Bahnschrift', 'DIN Alternate', 'Franklin Gothic Medium', 'Arial Narrow', sans-serif-condensed, sans-serif; font-stretch: condensed; display: inline-block; transform: scaleX(0.9); animation: titleGlow 2s ease-in-out infinite alternate; }
+        @keyframes titleGlow { from { text-shadow: 0 0 10px rgba(0, 240, 255, 0.6), 0 0 20px rgba(0, 240, 255, 0.3); } to { text-shadow: 0 0 20px rgba(0, 240, 255, 1), 0 0 40px rgba(0, 240, 255, 0.7); } }
+        .digital-btn { width: 100%; padding: 16px 20px; background: linear-gradient(180deg, #1e293b, #0f172a); color: var(--core-cyan); border: 2px solid var(--core-cyan); border-radius: 8px; font-family: inherit; font-size: 1.3rem; font-weight: bold; letter-spacing: 4px; cursor: pointer; box-shadow: 0 0 20px rgba(0, 240, 255, 0.2), inset 0 0 15px rgba(0, 240, 255, 0.1); transition: all 0.15s ease; }
+        .digital-btn:hover { background: var(--alert-blue); color: #fff; box-shadow: 0 0 20px rgba(0, 240, 255, 0.8); }
         #clear-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, rgba(16,185,129,0.2) 0%, #000 100%); z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; }
         .clear-title { font-size: 3.2rem; color: var(--led-green); text-shadow: 0 0 20px var(--led-green); margin-bottom: 20px; }
     </style>
@@ -682,3 +683,4 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
