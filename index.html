@@ -139,6 +139,7 @@
         </div>
         <div id="button-area">
             <canvas id="wire-canvas"></canvas>
+            <div id="timer-display" style="text-align: center; font-size: 2.2rem; color: var(--core-cyan); font-family: 'Courier New', monospace; font-weight: bold; margin-bottom: 5px; opacity: 0; text-shadow: 0 0 10px var(--core-cyan); letter-spacing: 3px;">3.00</div>
             <div id="digital-display" class="locked">
                 <div class="display-front" id="display-front-text">L<span id="char-o2" class="char-target">O</span>CKED</div>
                 <div class="display-back"></div>
@@ -370,29 +371,50 @@ const STAGES = {
     },
     // 03: JUST (Tap exactly at 3.0s)
     3: {
-        init() { stageState.started = false; stageState.done = false; document.getElementById('btn-text').textContent = 'READY'; },
+        init() { 
+            stageState.started = false; stageState.done = false; document.getElementById('btn-text').textContent = 'PUSH'; 
+            const td = document.getElementById('timer-display');
+            if(td) { td.style.opacity = '0'; td.textContent = '3.00'; td.style.color = 'var(--core-cyan)'; }
+        },
         down() {
             UI.btn.classList.add('pressed'); AudioSys.sfx.click();
+            const td = document.getElementById('timer-display');
             if (!stageState.started) {
                 stageState.started = true; stageState.startTime = performance.now(); UI.log('タイマー作動');
+                if(td) { td.style.opacity = '1'; td.textContent = '3.00'; td.style.color = 'var(--core-cyan)'; }
                 const loop = (t) => {
                     if (stageState.done || !stageState.started) return;
                     const el = (t - stageState.startTime) / 1000;
-                    let txt = 'READY';
-                    if (el < 1.0) txt = '3'; else if (el < 2.0) txt = '2'; else if (el < 2.8) txt = '1'; else txt = '▓.▓▓';
-                    document.getElementById('btn-text').textContent = txt;
+                    const remain = Math.max(0, 3.00 - el);
+                    if (td) {
+                        if (el >= 2.0) td.textContent = '▓.▓▓';
+                        else td.textContent = remain.toFixed(2);
+                    }
                     stageState.anim = requestAnimationFrame(loop);
                 };
                 stageState.anim = requestAnimationFrame(loop);
             } else {
                 const el = (performance.now() - stageState.startTime) / 1000;
                 stageState.done = true;
-                if (el >= 2.8 && el <= 3.2) { document.getElementById('btn-text').textContent = 'JUST'; completeStage(); }
-                else { AudioSys.sfx.buzz(); UI.log(`失敗: ${el.toFixed(2)}秒`); stageState.started = false; document.getElementById('btn-text').textContent = 'READY'; }
+                if (td) { td.textContent = Math.abs(3.00 - el).toFixed(2); }
+                if (el >= 2.8 && el <= 3.2) { 
+                    if(td) { td.style.color = 'var(--led-green)'; td.style.textShadow = '0 0 15px var(--led-green)'; }
+                    completeStage(); 
+                } else { 
+                    if(td) { td.style.color = 'var(--alert-red)'; td.style.textShadow = '0 0 15px var(--alert-red)'; }
+                    AudioSys.playOsc('sawtooth', 120, 0.2, 0.1);
+                    setTimeout(() => AudioSys.playOsc('sawtooth', 90, 0.3, 0.1), 200);
+                    UI.log(`失敗: ${el.toFixed(2)}秒`); 
+                    stageState.started = false; 
+                }
             }
         },
         up() { UI.btn.classList.remove('pressed'); },
-        cleanup() { cancelAnimationFrame(stageState.anim); }
+        cleanup() { 
+            cancelAnimationFrame(stageState.anim); 
+            const td = document.getElementById('timer-display');
+            if(td) { td.style.opacity = '0'; }
+        }
     },
     // 04: FLICKS (UP, RIGHT, DOWN, LEFT, UP)
     4: {
@@ -704,6 +726,10 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
+
+
+
 
 
 
