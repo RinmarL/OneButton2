@@ -279,6 +279,7 @@ function completeStage() {
 
 function loadStage(num) {
     stageTransitioning = false; stageState = {};
+    UI.clearLog();
     UI.leds.forEach(l => { if(l){ l.style.cursor='default'; l.onpointerdown=null; l.style.backgroundColor=''; l.style.boxShadow=''; } });
     const sName = num === 11 ? "FINAL" : STAGE_NAMES[num]; UI.sectorDisp.innerHTML = num === 11 ? `SECT<span id="char-o1" class="char-target">O</span>R EX FINAL` : `SECT<span id="char-o1" class="char-target">O</span>R ${num.toString().padStart(2, '0')} ${sName}`;
     UI.log(num === 11 ? `セクター EX をロード中...` : `セクター ${num} をロード中...`);
@@ -726,6 +727,8 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
+
 
 
 
