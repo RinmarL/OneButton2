@@ -1907,26 +1907,83 @@ const STAGES = {
             stageState.moveF = (e) => { if(stageState.dragF && stageState.cuts >= 4){ let ang = (stageState.rot||0) + (getEventPos(e).x - stageState.sx)*0.6; frame.style.transform = `rotateY(${ang}deg)`; stageState.curRot = ang; } };
             frame.addEventListener('pointerdown', stageState.downF); document.addEventListener('pointerup', stageState.upF); document.addEventListener('pointermove', stageState.moveF);
             
-            // LED 5: LOCKED Rotate (R360, L360, R360)
+            // LED 5: LOCKED Rotate (R360, L360, R360: 360度スナップ判定)
             const disp = document.getElementById('digital-display');
             if (disp) disp.style.cursor = 'grab';
-            stageState.dSeq = [360, -360, 360]; stageState.dIdx = 0; stageState.dAng = 0; stageState.dragD = false;
-            disp.onpointerdown = (e) => { const r = disp.getBoundingClientRect(); stageState.dcx=r.left+r.width/2; stageState.dcy=r.top+r.height/2; stageState.lAng=Math.atan2(getEventPos(e).y-stageState.dcy, getEventPos(e).x-stageState.dcx); stageState.dragD=true; };
-            stageState.upD = () => { stageState.dragD = false; };
+            stageState.dSeq = [360, -360, 360];
+            stageState.dIdx = 0;
+            stageState.dCurAngle = 0;
+            stageState.dLastConfirmedSnap = 0;
+            stageState.dragD = false;
+
+            disp.onpointerdown = (e) => {
+                const r = disp.getBoundingClientRect();
+                stageState.dcx = r.left + r.width / 2;
+                stageState.dcy = r.top + r.height / 2;
+                const p = getEventPos(e);
+                stageState.lAng = Math.atan2(p.y - stageState.dcy, p.x - stageState.dcx);
+                stageState.dragD = true;
+                disp.style.transition = 'none';
+            };
+
+            stageState.upD = () => {
+                if (!stageState.dragD) return;
+                stageState.dragD = false;
+                // 手を離した時に最も近い360度へカチッとスナップ
+                const nearestSnap = Math.round(stageState.dCurAngle / 360) * 360;
+                stageState.dCurAngle = nearestSnap;
+                disp.style.transition = 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                disp.style.transform = `rotate(${nearestSnap}deg)`;
+            };
+
             stageState.moveD = (e) => {
-                if(stageState.dragD && !stageState.st[4]) {
-                    const a = Math.atan2(getEventPos(e).y-stageState.dcy, getEventPos(e).x-stageState.dcx);
-                    let da = a - stageState.lAng; while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
-                    stageState.dAng += da * 180 / Math.PI; stageState.lAng = a;
-                    disp.style.transform = `rotate(${stageState.dAng}deg)`;
-                    const tgt = stageState.dSeq[stageState.dIdx];
-                    if(Math.abs(stageState.dAng) >= Math.abs(tgt) && Math.sign(stageState.dAng)===Math.sign(tgt)) {
-                        stageState.dIdx++; stageState.dAng=0; AudioSys.sfx.thud();
-                        if(stageState.dIdx>=3){ stageState.st[4]=true; UI.setLED(4, 'green'); chk(); }
+                if (!stageState.dragD) return;
+                const p = getEventPos(e);
+                const a = Math.atan2(p.y - stageState.dcy, p.x - stageState.dcx);
+                let da = a - stageState.lAng;
+                while (da > Math.PI) da -= 2 * Math.PI;
+                while (da < -Math.PI) da += 2 * Math.PI;
+                const dDeg = da * 180 / Math.PI;
+                stageState.lAng = a;
+                stageState.dCurAngle += dDeg;
+
+                // 360度スナップ判定（前後10度の範囲内であればその360度に吸着）
+                const nearestSnap = Math.round(stageState.dCurAngle / 360) * 360;
+                const diff = stageState.dCurAngle - nearestSnap;
+                let displayAngle = stageState.dCurAngle;
+
+                if (Math.abs(diff) <= 10) {
+                    displayAngle = nearestSnap; // ±10度以内なら360度に吸着
+
+                    // 新しい360度スナップ位置に入った瞬間の処理（1回転として判定）
+                    if (nearestSnap !== stageState.dLastConfirmedSnap) {
+                        const delta = nearestSnap - stageState.dLastConfirmedSnap;
+                        stageState.dLastConfirmedSnap = nearestSnap;
+                        AudioSys.sfx.click(); // カチッ！
+
+                        if (stageState.dIdx < stageState.dSeq.length && !stageState.st[4]) {
+                            const tgt = stageState.dSeq[stageState.dIdx];
+                            if (Math.sign(delta) === Math.sign(tgt)) {
+                                stageState.dIdx++;
+                                AudioSys.sfx.thud();
+                                if (stageState.dIdx >= 3) {
+                                    stageState.st[4] = true;
+                                    UI.setLED(4, 'green');
+                                    chk();
+                                }
+                            } else {
+                                // 逆回転時はシーケンスリセット
+                                stageState.dIdx = 0;
+                            }
+                        }
                     }
                 }
+
+                disp.style.transform = `rotate(${displayAngle}deg)`;
             };
-            document.addEventListener('pointerup', stageState.upD); document.addEventListener('pointermove', stageState.moveD);
+
+            document.addEventListener('pointerup', stageState.upD);
+            document.addEventListener('pointermove', stageState.moveD);
         },
         down() {
             UI.btn.classList.add('pressed'); AudioSys.sfx.click();
