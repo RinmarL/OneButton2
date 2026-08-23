@@ -570,69 +570,70 @@ const STAGES = {
             stageState.seq = ['up','right','down','left','up']; 
             stageState.idx = 0; 
             stageState.dragging = false; 
+            UI.btnFrame.style.transform = '';
+            UI.btnFrame.style.transition = '';
             UI.btn.style.transform = '';
-            UI.btn.style.transition = '';
         },
         down(e) {
-            UI.btn.classList.add('pressed'); AudioSys.sfx.click();
-            stageState.startX = getEventPos(e).x; stageState.startY = getEventPos(e).y;
+            UI.btn.classList.add('pressed');
+            stageState.startX = getEventPos(e).x; 
+            stageState.startY = getEventPos(e).y;
             stageState.dragging = true;
-            UI.btn.style.transition = '';
+            UI.btnFrame.style.transition = '';
         },
         up() { 
             UI.btn.classList.remove('pressed'); 
             stageState.dragging = false; 
-            UI.btn.style.transition = 'transform 0.15s ease-out';
-            UI.btn.style.transform = '';
-            setTimeout(() => { UI.btn.style.transition = ''; }, 150);
+            UI.btnFrame.style.transition = 'transform 0.15s ease-out';
+            UI.btnFrame.style.transform = '';
+            setTimeout(() => { UI.btnFrame.style.transition = ''; }, 150);
         },
         winMove(e) {
-            if (!stageState.dragging) return;
+            if (!stageState.dragging || stageState.idx >= stageState.seq.length) return;
             const p = getEventPos(e); 
-            const dx = p.x - stageState.startX; 
-            const dy = p.y - stageState.startY;
+            const rawDx = p.x - stageState.startX; 
+            const rawDy = p.y - stageState.startY;
             
-            const clamp = (val, max) => Math.max(-max, Math.min(max, val));
-            UI.btn.style.transform = `translate(${clamp(dx, 50)}px, ${clamp(dy, 50)}px)`;
+            const targetDir = stageState.seq[stageState.idx];
+            let moveX = 0;
+            let moveY = 0;
+            let currentDist = 0;
 
-            if (Math.abs(dx) > 35 || Math.abs(dy) > 35) {
-                let dir = '';
-                if (Math.abs(dx) > Math.abs(dy)) { 
-                    dir = dx > 0 ? 'right' : 'left'; 
-                } else { 
-                    dir = dy > 0 ? 'down' : 'up'; 
-                }
+            if (targetDir === 'up') {
+                moveY = Math.min(0, Math.max(-50, rawDy));
+                currentDist = -moveY;
+            } else if (targetDir === 'down') {
+                moveY = Math.max(0, Math.min(50, rawDy));
+                currentDist = moveY;
+            } else if (targetDir === 'left') {
+                moveX = Math.min(0, Math.max(-50, rawDx));
+                currentDist = -moveX;
+            } else if (targetDir === 'right') {
+                moveX = Math.max(0, Math.min(50, rawDx));
+                currentDist = moveX;
+            }
 
-                if (dir === stageState.seq[stageState.idx]) {
-                    stageState.idx++; 
-                    AudioSys.sfx.beep();
-                    if (stageState.idx <= 3) UI.setLED(stageState.idx-1, 'green');
-                    stageState.startX = p.x; 
-                    stageState.startY = p.y;
-                    
-                    UI.btn.style.transition = 'transform 0.1s ease-out';
-                    UI.btn.style.transform = '';
-                    setTimeout(() => { if (stageState.dragging) UI.btn.style.transition = ''; }, 100);
+            UI.btnFrame.style.transform = `translate(${moveX}px, ${moveY}px)`;
 
-                    if (stageState.idx >= stageState.seq.length) { 
-                        stageState.dragging = false; 
-                        completeStage(); 
-                    }
-                } else {
-                    stageState.idx = 0; 
-                    UI.resetLEDs(); 
-                    stageState.startX = p.x; 
-                    stageState.startY = p.y;
-                    
-                    UI.btn.style.transition = 'transform 0.1s ease-out';
-                    UI.btn.style.transform = '';
-                    setTimeout(() => { if (stageState.dragging) UI.btn.style.transition = ''; }, 100);
+            if (currentDist >= 35) {
+                stageState.idx++;
+                stageState.startX = p.x;
+                stageState.startY = p.y;
+
+                UI.btnFrame.style.transition = 'transform 0.1s ease-out';
+                UI.btnFrame.style.transform = '';
+                setTimeout(() => { if (stageState.dragging) UI.btnFrame.style.transition = ''; }, 100);
+
+                if (stageState.idx >= stageState.seq.length) {
+                    stageState.dragging = false;
+                    completeStage();
                 }
             }
         },
         cleanup() {
+            UI.btnFrame.style.transform = '';
+            UI.btnFrame.style.transition = '';
             UI.btn.style.transform = '';
-            UI.btn.style.transition = '';
         }
     },
     // 05: DRAG&DROP (Sum to 10)
