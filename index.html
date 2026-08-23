@@ -467,7 +467,7 @@
                 <svg class="reboot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/>
                 </svg>
-                <span>REBOOT</span>
+                <span>再起動</span>
             </button>
             <div id="chip-container">
                 <div class="chip" data-val="5">5</div><div class="chip" data-val="4">4</div><div class="chip" data-val="3">3</div><div class="chip" data-val="2">2</div><div class="chip" data-val="1">1</div>
@@ -1373,10 +1373,24 @@ const STAGES = {
                     stageState.open = true;
                 }, 1000);
 
-                // 1.5秒後（完全暗転完了時）：元通りバリア復活＆リセット
+                // 1.5秒後（完全暗転完了時）：元通りバリア復活＆回転状態リセット
                 stageState.blackoutTimer = setTimeout(() => {
                     barrier.style.display = 'block';
                     stageState.open = false;
+
+                    // 暗転中に回転している状況を全て元の状態に戻す
+                    frame.style.transition = 'none';
+                    frame.style.transform = 'rotateY(0deg)';
+                    stageState.rot = 0;
+                    stageState.curRot = 0;
+                    stageState.dragF = false;
+
+                    if (disp) {
+                        disp.style.transition = 'none';
+                        disp.style.transform = 'rotate(0deg)';
+                        stageState.dAng = 0;
+                        stageState.dragDisp = false;
+                    }
 
                     // 暗転復帰（パッと明るく戻る）
                     setTimeout(() => {
