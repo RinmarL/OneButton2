@@ -174,18 +174,18 @@
         /* EX: HUD, DIP, FUKIDASHI */
         #skill-hud { 
             position: absolute; 
-            top: -125px; 
+            top: -65px; 
             left: 50%; 
             transform: translateX(-50%); 
             width: 100px; 
             height: 100px; 
             border-radius: 50%; 
             border: 2px solid var(--core-cyan); 
-            background: rgba(10, 15, 25, 0.85); 
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4), inset 0 0 10px rgba(0, 240, 255, 0.2); 
+            background: rgba(10, 15, 25, 0.9); 
+            box-shadow: 0 0 16px rgba(0, 240, 255, 0.6), inset 0 0 10px rgba(0, 240, 255, 0.3); 
             display: none; 
             pointer-events: none; 
-            z-index: 120; 
+            z-index: 200; 
         }
         .skill-safe-zone { 
             position: absolute; 
@@ -463,6 +463,7 @@
         </div>
         <div id="button-area">
             <div id="timer-display" style="text-align: center; font-size: 2.2rem; color: var(--core-cyan); font-family: 'Courier New', monospace; font-weight: bold; margin-bottom: 5px; opacity: 0; text-shadow: 0 0 10px var(--core-cyan); letter-spacing: 3px;">3.00</div>
+            <div id="skill-hud"><div class="skill-safe-zone"></div><div id="skill-needle"></div></div>
             <div id="digital-display" class="locked">
                 <div class="display-front" id="display-front-text">L<span id="char-o2" class="char-target">O</span>CKED</div>
                 <div class="display-back"></div>
@@ -474,7 +475,6 @@
                         <div class="cut-wire w-tl" data-id="1"></div><div class="cut-wire w-tr" data-id="2"></div>
                         <div class="cut-wire w-bl" data-id="3"></div><div class="cut-wire w-br" data-id="4"></div>
                     </div>
-                    <div id="skill-hud"><div class="skill-safe-zone"></div><div id="skill-needle"></div></div>
                     <div id="center-socket" class="char-target"></div>
                     <div id="the-button">
                         <div class="btn-face-front" id="btn-face">
@@ -1883,8 +1883,16 @@ const STAGES = {
                         const loop = (t) => {
                             if(!stageState.hActive || stageState.st[1]) return;
                             const el = (t - stageState.hStart) / 1000;
-                            // 速度: 1秒で1周（360度/秒）
-                            const deg = (el * 360) % 360;
+                            if (el >= 1.0) {
+                                // 1周（1秒）したら自動的に消えて終了
+                                stageState.hActive = false;
+                                document.getElementById('skill-hud').style.display = 'none';
+                                document.getElementById('skill-needle').style.transform = 'rotate(0deg)';
+                                stageState.curDeg = undefined;
+                                AudioSys.sfx.buzz();
+                                return;
+                            }
+                            const deg = el * 360;
                             document.getElementById('skill-needle').style.transform = `rotate(${deg}deg)`;
                             stageState.curDeg = deg;
                             stageState.hAnim = requestAnimationFrame(loop);
