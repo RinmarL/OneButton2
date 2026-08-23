@@ -125,6 +125,106 @@
         .digital-btn:hover { background: var(--alert-blue); color: #fff; box-shadow: 0 0 20px rgba(0, 240, 255, 0.8); }
         #clear-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, rgba(16,185,129,0.2) 0%, #000 100%); z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; }
         .clear-title { font-size: 3.2rem; color: var(--led-green); text-shadow: 0 0 20px var(--led-green); margin-bottom: 20px; }
+        /* DEBUG PANEL */
+        #debug-panel {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            z-index: 12000;
+            background: rgba(10, 14, 23, 0.94);
+            border: 1px solid var(--core-cyan);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(0, 0, 0, 0.8);
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #fff;
+            user-select: none;
+            touch-action: auto;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            max-width: calc(100vw - 20px);
+        }
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 8px;
+            background: rgba(0, 240, 255, 0.15);
+            cursor: pointer;
+            border-bottom: 1px solid rgba(0, 240, 255, 0.3);
+        }
+        .debug-title {
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: var(--core-cyan);
+            text-shadow: 0 0 5px var(--core-cyan);
+        }
+        .debug-toggle-btn {
+            background: none;
+            border: none;
+            color: var(--core-cyan);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+        .debug-body {
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        #debug-panel.collapsed .debug-body {
+            display: none;
+        }
+        #debug-panel.collapsed .debug-header {
+            border-bottom: none;
+        }
+        .debug-label {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            margin-bottom: 3px;
+        }
+        .debug-stages {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+        }
+        .debug-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 2px;
+        }
+        .dbg-btn {
+            background: #1e293b;
+            border: 1px solid #475569;
+            color: #f1f5f9;
+            padding: 4px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.1s ease;
+        }
+        .dbg-btn:active, .dbg-btn:hover {
+            background: var(--core-cyan);
+            color: #000;
+            border-color: var(--core-cyan);
+            box-shadow: 0 0 8px var(--core-cyan);
+        }
+        .dbg-btn-clear {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: var(--led-green);
+            color: var(--led-green);
+        }
+        .dbg-action-btn {
+            flex: 1;
+        }
+        .dbg-pass {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: #f59e0b;
+            color: #fbbf24;
+        }
     </style>
 </head>
 <body>
@@ -185,6 +285,37 @@
     <div id="clear-screen">
         <h1 class="clear-title">SYSTEM CLEARED</h1>
         <button id="retry-btn" class="digital-btn">REBOOT</button>
+    </div>
+    <div id="debug-panel">
+        <div class="debug-header">
+            <span class="debug-title">🔧 DEBUG CONTROLLER</span>
+            <button id="debug-toggle-btn" class="debug-toggle-btn" title="デバッグ開閉 (Key: D)">▲</button>
+        </div>
+        <div id="debug-body" class="debug-body">
+            <div class="debug-section">
+                <div class="debug-label">JUMP TO SECTOR:</div>
+                <div class="debug-stages">
+                    <button class="dbg-btn" data-stage="1">01</button>
+                    <button class="dbg-btn" data-stage="2">02</button>
+                    <button class="dbg-btn" data-stage="3">03</button>
+                    <button class="dbg-btn" data-stage="4">04</button>
+                    <button class="dbg-btn" data-stage="5">05</button>
+                    <button class="dbg-btn" data-stage="6">06</button>
+                    <button class="dbg-btn" data-stage="7">07</button>
+                    <button class="dbg-btn" data-stage="8">08</button>
+                    <button class="dbg-btn" data-stage="9">09</button>
+                    <button class="dbg-btn" data-stage="10">10</button>
+                    <button class="dbg-btn" data-stage="11">EX</button>
+                    <button class="dbg-btn dbg-btn-clear" data-action="clear">CLEAR</button>
+                </div>
+            </div>
+            <div class="debug-section debug-actions">
+                <button class="dbg-btn dbg-action-btn" data-action="prev">◀ PREV</button>
+                <button class="dbg-btn dbg-action-btn" data-action="reload">↺ RESET</button>
+                <button class="dbg-btn dbg-action-btn" data-action="next">NEXT ▶</button>
+                <button class="dbg-btn dbg-action-btn dbg-pass" data-action="pass">⚡ PASS</button>
+            </div>
+        </div>
     </div>
 <script>
 const AudioSys = {
@@ -770,7 +901,79 @@ const STAGES = {
     }
 };
 
+function jumpToStage(num) {
+    AudioSys.init();
+    if (STAGES[currentStage] && STAGES[currentStage].cleanup) {
+        STAGES[currentStage].cleanup();
+    }
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('clear-screen').style.display = 'none';
+    document.getElementById('transition-overlay').style.opacity = '0';
+    
+    currentStage = Math.max(1, Math.min(MAX_STAGE, num));
+    loadStage(currentStage);
+}
+
+function initDebugPanel() {
+    const panel = document.getElementById('debug-panel');
+    const toggleBtn = document.getElementById('debug-toggle-btn');
+    const header = document.querySelector('.debug-header');
+    
+    const toggle = () => {
+        panel.classList.toggle('collapsed');
+        toggleBtn.textContent = panel.classList.contains('collapsed') ? '▼' : '▲';
+    };
+    header.addEventListener('click', toggle);
+
+    document.querySelectorAll('.dbg-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const s = btn.dataset.stage;
+            const action = btn.dataset.action;
+            if (s) {
+                jumpToStage(parseInt(s));
+            } else if (action === 'clear') {
+                AudioSys.init();
+                document.getElementById('start-screen').style.display = 'none';
+                document.getElementById('clear-screen').style.display = 'flex';
+                document.getElementById('transition-overlay').style.opacity = '0';
+            } else if (action === 'next') {
+                jumpToStage(currentStage < MAX_STAGE ? currentStage + 1 : 1);
+            } else if (action === 'prev') {
+                jumpToStage(currentStage > 1 ? currentStage - 1 : MAX_STAGE);
+            } else if (action === 'reload') {
+                jumpToStage(currentStage);
+            } else if (action === 'pass') {
+                completeStage();
+            }
+        });
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        const key = e.key.toUpperCase();
+        if (key >= '1' && key <= '9') {
+            jumpToStage(parseInt(key));
+        } else if (key === '0') {
+            jumpToStage(10);
+        } else if (key === '-' || key === 'E') {
+            jumpToStage(11);
+        } else if (key === 'C') {
+            completeStage();
+        } else if (key === 'N') {
+            jumpToStage(currentStage < MAX_STAGE ? currentStage + 1 : 1);
+        } else if (key === 'P') {
+            jumpToStage(currentStage > 1 ? currentStage - 1 : MAX_STAGE);
+        } else if (key === 'R') {
+            jumpToStage(currentStage);
+        } else if (key === 'D') {
+            toggle();
+        }
+    });
+}
+
 window.onload = () => {
+    initDebugPanel();
     document.getElementById('start-btn').onclick = () => {
         AudioSys.init(); AudioSys.sfx.click();
         document.getElementById('start-screen').style.opacity = '0';
