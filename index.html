@@ -1097,28 +1097,122 @@ const STAGES = {
     // 07: CODE (Dial: R1, L2, R1, L2, R2 -> PUSH)
     7: {
         init() {
-            UI.log('MEMO: R1 L2 R1 L2 R2 P'); UI.btn.classList.add('disabled');
-            stageState.seq = [90, -180, 90, -180, 180]; stageState.idx = 0; stageState.angle = 0; stageState.dragD = false;
-            stageState.downD = (e) => { if(e.target.closest('#the-button')) return; const rect = frame.getBoundingClientRect(); stageState.cx = rect.left+rect.width/2; stageState.cy = rect.top+rect.height/2; stageState.lastAng = Math.atan2(getEventPos(e).y - stageState.cy, getEventPos(e).x - stageState.cx); stageState.dragD = true; };
-            stageState.upD = () => { stageState.dragD = false; };
+            UI.log('MEMO: R1L2R1L2R2P');
+            UI.btn.classList.add('disabled');
+            stageState.steps = [1, -2, 1, -2, 2];
+            stageState.stepIdx = 0;
+            stageState.stepProgress = 0;
+            stageState.displayAngle = 0;
+            stageState.dragAngleAcc = 0;
+            stageState.dragD = false;
+            frame.style.transform = 'rotate(0deg)';
+            frame.style.transition = '';
+
+            stageState.downD = (e) => {
+                if (e.target.closest('#the-button')) return;
+                const rect = frame.getBoundingClientRect();
+                stageState.cx = rect.left + rect.width / 2;
+                stageState.cy = rect.top + rect.height / 2;
+                const p = getEventPos(e);
+                stageState.lastAng = Math.atan2(p.y - stageState.cy, p.x - stageState.cx);
+                stageState.dragD = true;
+            };
+
+            stageState.upD = () => {
+                stageState.dragD = false;
+            };
+
             stageState.moveD = (e) => {
-                if(!stageState.dragD) return;
-                const a = Math.atan2(getEventPos(e).y - stageState.cy, getEventPos(e).x - stageState.cx);
-                let da = a - stageState.lastAng; while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
-                const dDeg = da * 180 / Math.PI; stageState.angle += dDeg; stageState.lastAng = a;
-                frame.style.transform = `rotate(${stageState.angle}deg)`;
-                
-                const tgt = stageState.seq[stageState.idx];
-                if(tgt && Math.abs(stageState.angle) >= Math.abs(tgt) && Math.sign(stageState.angle)===Math.sign(tgt)) {
-                    stageState.idx++; stageState.angle=0; AudioSys.sfx.thud(); UI.log(`コード承認: ${stageState.idx}/5`);
-                    if(stageState.idx===5) { UI.btn.classList.remove('disabled'); UI.log('プッシュ準備完了'); }
+                if (!stageState.dragD) return;
+                const p = getEventPos(e);
+                const a = Math.atan2(p.y - stageState.cy, p.x - stageState.cx);
+                let da = a - stageState.lastAng;
+                while (da > Math.PI) da -= 2 * Math.PI;
+                while (da < -Math.PI) da += 2 * Math.PI;
+                const dDeg = da * 180 / Math.PI;
+                stageState.lastAng = a;
+                stageState.dragAngleAcc += dDeg;
+
+                // 時計回りへ90度ノッチ
+                while (stageState.dragAngleAcc >= 45) {
+                    stageState.dragAngleAcc -= 90;
+                    stageState.displayAngle += 90;
+                    frame.style.transition = 'transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    frame.style.transform = `rotate(${stageState.displayAngle}deg)`;
+                    AudioSys.sfx.click();
+
+                    if (stageState.stepIdx < stageState.steps.length) {
+                        const target = stageState.steps[stageState.stepIdx];
+                        if (target > 0) {
+                            stageState.stepProgress += 1;
+                            if (stageState.stepProgress === target) {
+                                AudioSys.sfx.thud();
+                                stageState.stepIdx++;
+                                stageState.stepProgress = 0;
+                                if (stageState.stepIdx === stageState.steps.length) {
+                                    UI.btn.classList.remove('disabled');
+                                }
+                            }
+                        } else {
+                            // 逆回転したためリセット
+                            stageState.stepIdx = 0;
+                            stageState.stepProgress = 0;
+                        }
+                    }
+                }
+
+                // 反時計回りへ90度ノッチ
+                while (stageState.dragAngleAcc <= -45) {
+                    stageState.dragAngleAcc += 90;
+                    stageState.displayAngle -= 90;
+                    frame.style.transition = 'transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    frame.style.transform = `rotate(${stageState.displayAngle}deg)`;
+                    AudioSys.sfx.click();
+
+                    if (stageState.stepIdx < stageState.steps.length) {
+                        const target = stageState.steps[stageState.stepIdx];
+                        if (target < 0) {
+                            stageState.stepProgress -= 1;
+                            if (stageState.stepProgress === target) {
+                                AudioSys.sfx.thud();
+                                stageState.stepIdx++;
+                                stageState.stepProgress = 0;
+                                if (stageState.stepIdx === stageState.steps.length) {
+                                    UI.btn.classList.remove('disabled');
+                                }
+                            }
+                        } else {
+                            // 逆回転したためリセット
+                            stageState.stepIdx = 0;
+                            stageState.stepProgress = 0;
+                        }
+                    }
                 }
             };
-            frame.addEventListener('pointerdown', stageState.downD); document.addEventListener('pointerup', stageState.upD); document.addEventListener('pointermove', stageState.moveD);
+
+            frame.addEventListener('pointerdown', stageState.downD);
+            document.addEventListener('pointerup', stageState.upD);
+            document.addEventListener('pointermove', stageState.moveD);
         },
-        down() { if(stageState.idx===5){ UI.btn.classList.add('pressed'); AudioSys.sfx.click(); completeStage(); } else { AudioSys.sfx.buzz(); } },
-        up() { UI.btn.classList.remove('pressed'); },
-        cleanup() { frame.removeEventListener('pointerdown', stageState.downD); document.removeEventListener('pointerup', stageState.upD); document.removeEventListener('pointermove', stageState.moveD); }
+        down() {
+            if (stageState.stepIdx === stageState.steps.length) {
+                UI.btn.classList.add('pressed');
+                AudioSys.sfx.click();
+                completeStage();
+            } else {
+                AudioSys.sfx.dullClick();
+            }
+        },
+        up() {
+            UI.btn.classList.remove('pressed');
+        },
+        cleanup() {
+            frame.removeEventListener('pointerdown', stageState.downD);
+            document.removeEventListener('pointerup', stageState.upD);
+            document.removeEventListener('pointermove', stageState.moveD);
+            frame.style.transform = '';
+            frame.style.transition = '';
+        }
     },
     // 08: REBOOT (Barrier)
     8: {
