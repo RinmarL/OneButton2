@@ -1883,8 +1883,8 @@ const STAGES = {
                         const loop = (t) => {
                             if(!stageState.hActive || stageState.st[1]) return;
                             const el = (t - stageState.hStart) / 1000;
-                            // 現在の速度: 1秒間に180度（2秒で1周）
-                            const deg = (el * 180) % 360;
+                            // 速度: 1秒で1周（360度/秒）
+                            const deg = (el * 360) % 360;
                             document.getElementById('skill-needle').style.transform = `rotate(${deg}deg)`;
                             stageState.curDeg = deg;
                             stageState.hAnim = requestAnimationFrame(loop);
