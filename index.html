@@ -172,9 +172,10 @@
         #center-socket { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: #222; border: 2px solid #555; display: none; }
 
         /* EX: HUD, DIP, FUKIDASHI */
+        /* EX: HUD, DIP, FUKIDASHI */
         #skill-hud { 
             position: absolute; 
-            top: -65px; 
+            top: 10px; 
             left: 50%; 
             transform: translateX(-50%); 
             width: 100px; 
@@ -210,10 +211,51 @@
         }
         #fukidashi { position: absolute; top: 40px; right: 10px; background: #fff; color: #000; padding: 8px 12px; border-radius: 10px; font-weight: bold; cursor: pointer; user-select: none; z-index: 300; display: none; border: 2px solid #ccc; }
         #fukidashi.cracked { color: #ef4444; border-color: #ef4444; transform: scale(0.9); }
-        #dip-switches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; background: #000; border: 2px solid #333; border-radius: 5px; }
-        .dip { width: 30px; height: 50px; background: #222; border: 1px solid #111; position: relative; cursor: pointer; }
-        .dip-knob { position: absolute; left: 0; width: 100%; height: 50%; background: #fff; transition: top 0.1s; }
-        .dip[data-state="0"] .dip-knob { top: 50%; } .dip[data-state="1"] .dip-knob { top: 0; }
+        #dip-switches { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 12px; 
+            padding: 12px 14px; 
+            background: #090d16; 
+            border: 2px solid #334155; 
+            border-radius: 10px; 
+            box-shadow: inset 0 3px 8px rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.7);
+        }
+        .dip { 
+            width: 32px; 
+            height: 56px; 
+            background: #030712; 
+            border: 1.5px solid #1e293b; 
+            border-radius: 6px; 
+            position: relative; 
+            cursor: pointer; 
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.9);
+            user-select: none;
+            touch-action: none;
+        }
+        .dip-knob { 
+            position: absolute; 
+            left: 2px; 
+            width: calc(100% - 4px); 
+            height: calc(50% - 2px); 
+            border-radius: 4px; 
+            transition: top 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s, box-shadow 0.15s; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+        /* OFF: 下部に配置 */
+        .dip[data-state="0"] .dip-knob { 
+            top: calc(50% - 2px); 
+            background: linear-gradient(180deg, #475569 0%, #1e293b 100%); 
+            border: 1px solid #334155; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.2); 
+        }
+        /* ON: 上部に配置＆水色にネオングロー発光！ */
+        .dip[data-state="1"] .dip-knob { 
+            top: 2px; 
+            background: linear-gradient(180deg, #00f0ff 0%, #0284c7 100%); 
+            border: 1px solid #38bdf8; 
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.9), inset 0 1px 2px rgba(255,255,255,0.9); 
+        }
         /* 06: VERTICAL SLIDE SWITCH (上下スライドスイッチ) */
         #back-switch {
             width: 58px;
