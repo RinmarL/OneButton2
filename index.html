@@ -1300,7 +1300,7 @@ const STAGES = {
                 if (stageState.rebooting) return;
                 stageState.rebooting = true;
                 AudioSys.sfx.click();
-                UI.log('再起動シーケンス開始（シャットダウン進行中...）');
+                UI.log('再起動シーケンス開始');
 
                 // 1.5秒かけて徐々に画面が暗転
                 const overlay = document.getElementById('transition-overlay');
@@ -1311,7 +1311,6 @@ const STAGES = {
                 stageState.barrierDropTimer = setTimeout(() => {
                     barrier.style.display = 'none';
                     stageState.open = true;
-                    UI.log('バリア停止（残り0.5秒）');
                 }, 1000);
 
                 // 1.5秒後（完全暗転完了時）：元通りバリア復活＆リセット
@@ -1323,7 +1322,7 @@ const STAGES = {
                     setTimeout(() => {
                         overlay.style.transition = 'opacity 0.2s ease';
                         overlay.style.opacity = '0';
-                        UI.log('システム再起動完了（バリア復旧）');
+                        UI.log('再起動完了');
                         stageState.rebooting = false;
                     }, 200);
                 }, 1500);
