@@ -1947,13 +1947,13 @@ const STAGES = {
                 stageState.lAng = a;
                 stageState.dCurAngle += dDeg;
 
-                // 360度スナップ判定（前後10度の範囲内であればその360度に吸着）
+                // 360度スナップ判定（前後20度の範囲内であればその360度に吸着）
                 const nearestSnap = Math.round(stageState.dCurAngle / 360) * 360;
                 const diff = stageState.dCurAngle - nearestSnap;
                 let displayAngle = stageState.dCurAngle;
 
-                if (Math.abs(diff) <= 10) {
-                    displayAngle = nearestSnap; // ±10度以内なら360度に吸着
+                if (Math.abs(diff) <= 20) {
+                    displayAngle = nearestSnap; // ±20度以内なら360度に吸着
 
                     // 新しい360度スナップ位置に入った瞬間の処理（1回転として判定）
                     if (nearestSnap !== stageState.dLastConfirmedSnap) {
