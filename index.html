@@ -45,14 +45,57 @@
         .frame-front { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 20px; background: repeating-linear-gradient(45deg, #000, #000 15px, var(--warning-yellow) 15px, var(--warning-yellow) 30px); box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.9); backface-visibility: hidden; display: flex; justify-content: center; align-items: center; }
         .frame-back { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 20px; background: #0f172a; border: 4px solid #1e293b; transform: rotateY(180deg); backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: grab; }
 
-        /* 06, EX: WIRES */
-        #wires-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
-        .cut-wire { position: absolute; width: 50px; height: 6px; background: #ef4444; border-radius: 3px; pointer-events: auto; cursor: crosshair; }
-        .cut-wire.cut { background: #334155; }
-        .w-tl { top: -2px; left: 15px; transform: rotate(45deg); }
-        .w-tr { top: -2px; right: 15px; transform: rotate(-45deg); }
-        .w-bl { bottom: -2px; left: 15px; transform: rotate(-45deg); }
-        .w-br { bottom: -2px; right: 15px; transform: rotate(45deg); }
+        /* 06, EX: WIRES (リアルインダストリアル・ワイヤー) */
+        #wires-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 30; }
+        .cut-wire { 
+            position: absolute; 
+            width: 66px; 
+            height: 10px; 
+            background: linear-gradient(180deg, #94a3b8 0%, #475569 35%, #1e293b 70%, #0f172a 100%);
+            border: 1px solid #1e293b;
+            border-radius: 4px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.4);
+            pointer-events: auto; 
+            cursor: crosshair; 
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .cut-wire::before, .cut-wire::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, #f8fafc, #475569);
+            border-radius: 50%;
+            box-shadow: 0 1px 2px #000;
+        }
+        .cut-wire::before { left: 4px; }
+        .cut-wire::after { right: 4px; }
+
+        .cut-wire.cut { 
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            pointer-events: none;
+        }
+        .cut-wire.cut::before {
+            top: -3px; left: 0; width: 26px; height: 8px;
+            background: linear-gradient(180deg, #64748b, #1e293b);
+            border-radius: 3px 0 0 3px;
+            transform: rotate(-30deg);
+            box-shadow: 0 2px 4px #000;
+        }
+        .cut-wire.cut::after {
+            top: 5px; right: 0; width: 26px; height: 8px;
+            background: linear-gradient(180deg, #64748b, #1e293b);
+            border-radius: 0 3px 3px 0;
+            transform: rotate(30deg);
+            box-shadow: 0 2px 4px #000;
+        }
+        .w-tl { top: 6px; left: 6px; transform: rotate(45deg); }
+        .w-tr { top: 6px; right: 6px; transform: rotate(-45deg); }
+        .w-bl { bottom: 6px; left: 6px; transform: rotate(-45deg); }
+        .w-br { bottom: 6px; right: 6px; transform: rotate(45deg); }
 
         /* THE BUTTON (青色) */
         #the-button { width: 200px; height: 200px; border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; transform-style: preserve-3d; transition: transform 0.1s; cursor: pointer; z-index: 10; }
@@ -343,7 +386,9 @@ const AudioSys = {
         beep() { AudioSys.playOsc('square', 600, 0.1, 0.1); },
         buzz() { AudioSys.playOsc('sawtooth', 150, 0.3, 0.3); },
         success() { AudioSys.playOsc('sine', 1046.50, 0.1, 0.1); setTimeout(() => AudioSys.playOsc('sine', 1318.51, 0.15, 0.1), 100); setTimeout(() => AudioSys.playOsc('sine', 1567.98, 0.2, 0.1), 200); },
-        glass() { AudioSys.playNoise(0.2, 0.3, 'spark'); AudioSys.playOsc('square', 2000, 0.1, 0.1); }
+        glass() { AudioSys.playNoise(0.2, 0.3, 'spark'); AudioSys.playOsc('square', 2000, 0.1, 0.1); },
+        wireCut() { AudioSys.playOsc('sine', 950, 0.03, 0.06); AudioSys.playNoise(0.03, 0.05, 'spark'); },
+        dullClick() { AudioSys.playOsc('triangle', 90, 0.05, 0.08); }
     }
 };
 
@@ -564,71 +609,126 @@ const STAGES = {
             if(td) { td.style.opacity = '0'; }
         }
     },
-    // 04: FLICKS (UP, RIGHT, DOWN, LEFT, UP)
+    // 04: FLICKS (一筆書き連続軌道＆リワインド復帰)
     4: {
         init() { 
-            stageState.seq = ['up','right','down','left','up']; 
             stageState.idx = 0; 
             stageState.dragging = false; 
+            stageState.rewinding = false;
+            stageState.curPos = [0, 0];
             UI.btnFrame.style.transform = '';
             UI.btnFrame.style.transition = '';
             UI.btn.style.transform = '';
         },
         down(e) {
+            if (stageState.rewinding) return;
             UI.btn.classList.add('pressed');
             stageState.startX = getEventPos(e).x; 
             stageState.startY = getEventPos(e).y;
             stageState.dragging = true;
+            stageState.idx = 0;
+            stageState.curPos = [0, 0];
             UI.btnFrame.style.transition = '';
         },
         up() { 
             UI.btn.classList.remove('pressed'); 
-            stageState.dragging = false; 
-            UI.btnFrame.style.transition = 'transform 0.15s ease-out';
-            UI.btnFrame.style.transform = '';
-            setTimeout(() => { UI.btnFrame.style.transition = ''; }, 150);
+            if (!stageState.dragging || stageState.rewinding) return;
+            stageState.dragging = false;
+
+            // 途中で手を離した場合は、通ってきたポイントを逆順に辿って初期位置へ戻る
+            stageState.rewinding = true;
+            const checkpoints = [
+                [0, 0],       // P0 (中央)
+                [0, -60],     // P1 (上)
+                [60, -60],    // P2 (右上)
+                [60, 60],     // P3 (右下)
+                [-60, 60],    // P4 (左下)
+                [-60, 0]      // P5 (左中)
+            ];
+
+            const rewindPath = [];
+            rewindPath.push(stageState.curPos);
+            for (let i = stageState.idx; i >= 0; i--) {
+                rewindPath.push(checkpoints[i]);
+            }
+
+            const stepRewind = () => {
+                if (rewindPath.length === 0) {
+                    stageState.idx = 0;
+                    stageState.curPos = [0, 0];
+                    stageState.rewinding = false;
+                    UI.btnFrame.style.transition = '';
+                    UI.btnFrame.style.transform = '';
+                    return;
+                }
+                const nextPt = rewindPath.shift();
+                UI.btnFrame.style.transition = 'transform 0.09s linear';
+                UI.btnFrame.style.transform = `translate(${nextPt[0]}px, ${nextPt[1]}px)`;
+                setTimeout(stepRewind, 90);
+            };
+            stepRewind();
         },
         winMove(e) {
-            if (!stageState.dragging || stageState.idx >= stageState.seq.length) return;
+            if (!stageState.dragging || stageState.rewinding) return;
             const p = getEventPos(e); 
             const rawDx = p.x - stageState.startX; 
             const rawDy = p.y - stageState.startY;
-            
-            const targetDir = stageState.seq[stageState.idx];
-            let moveX = 0;
-            let moveY = 0;
-            let currentDist = 0;
 
-            if (targetDir === 'up') {
-                moveY = Math.min(0, Math.max(-50, rawDy));
-                currentDist = -moveY;
-            } else if (targetDir === 'down') {
-                moveY = Math.max(0, Math.min(50, rawDy));
-                currentDist = moveY;
-            } else if (targetDir === 'left') {
-                moveX = Math.min(0, Math.max(-50, rawDx));
-                currentDist = -moveX;
-            } else if (targetDir === 'right') {
-                moveX = Math.max(0, Math.min(50, rawDx));
-                currentDist = moveX;
-            }
+            let curX = 0;
+            let curY = 0;
 
-            UI.btnFrame.style.transform = `translate(${moveX}px, ${moveY}px)`;
-
-            if (currentDist >= 35) {
-                stageState.idx++;
-                stageState.startX = p.x;
-                stageState.startY = p.y;
-
-                UI.btnFrame.style.transition = 'transform 0.1s ease-out';
-                UI.btnFrame.style.transform = '';
-                setTimeout(() => { if (stageState.dragging) UI.btnFrame.style.transition = ''; }, 100);
-
-                if (stageState.idx >= stageState.seq.length) {
+            if (stageState.idx === 0) {
+                // Step 0: [0, 0] -> [0, -60] (上へ)
+                curX = 0;
+                curY = Math.min(0, Math.max(-60, rawDy));
+                if (curY <= -55) {
+                    stageState.idx = 1;
+                    stageState.startX = p.x;
+                    stageState.startY = p.y;
+                }
+            } else if (stageState.idx === 1) {
+                // Step 1: [0, -60] -> [60, -60] (右へ)
+                curY = -60;
+                curX = Math.max(0, Math.min(60, rawDx));
+                if (curX >= 55) {
+                    stageState.idx = 2;
+                    stageState.startX = p.x;
+                    stageState.startY = p.y;
+                }
+            } else if (stageState.idx === 2) {
+                // Step 2: [60, -60] -> [60, 60] (下へ)
+                curX = 60;
+                curY = Math.min(60, Math.max(-60, -60 + rawDy));
+                if (curY >= 55) {
+                    stageState.idx = 3;
+                    stageState.startX = p.x;
+                    stageState.startY = p.y;
+                }
+            } else if (stageState.idx === 3) {
+                // Step 3: [60, 60] -> [-60, 60] (左へ)
+                curY = 60;
+                curX = Math.max(-60, Math.min(60, 60 + rawDx));
+                if (curX <= -55) {
+                    stageState.idx = 4;
+                    stageState.startX = p.x;
+                    stageState.startY = p.y;
+                }
+            } else if (stageState.idx === 4) {
+                // Step 4: [-60, 60] -> [-60, 0] (上へ・一周完了)
+                curX = -60;
+                curY = Math.max(0, Math.min(60, 60 + rawDy));
+                if (curY <= 5) {
+                    stageState.idx = 5;
                     stageState.dragging = false;
-                    completeStage();
+                    UI.btnFrame.style.transition = 'transform 0.15s ease-out';
+                    UI.btnFrame.style.transform = '';
+                    setTimeout(() => completeStage(), 150);
+                    return;
                 }
             }
+
+            stageState.curPos = [curX, curY];
+            UI.btnFrame.style.transform = `translate(${curX}px, ${curY}px)`;
         },
         cleanup() {
             UI.btnFrame.style.transform = '';
@@ -670,23 +770,89 @@ const STAGES = {
     // 06: SWIPE (Cut 4 wires, flip, switch ON)
     6: {
         init() {
-            UI.btn.classList.add('disabled'); document.getElementById('wires-container').style.display = 'block';
-            document.getElementById('back-switch').style.display = 'flex'; document.getElementById('back-switch').className = 'switch-off'; document.getElementById('back-switch').textContent = 'OFF';
-            stageState.cuts = 0; stageState.power = false; stageState.rot = 0; stageState.dragF = false;
+            UI.btn.classList.add('disabled'); 
+            document.getElementById('wires-container').style.display = 'block';
+            document.getElementById('back-switch').style.display = 'flex'; 
+            document.getElementById('back-switch').className = 'switch-off'; 
+            document.getElementById('back-switch').textContent = 'OFF';
+            stageState.cuts = 0; 
+            stageState.power = false; 
+            stageState.rot = 0; 
+            stageState.dragF = false;
+
+            const handleCut = (w) => {
+                if (!w.classList.contains('cut')) {
+                    w.classList.add('cut');
+                    AudioSys.sfx.wireCut();
+                    stageState.cuts++;
+                    UI.log(`ワイヤー切断 (${stageState.cuts}/4)`);
+                    if (stageState.cuts >= 4) {
+                        UI.log('ワイヤー全切断。フレーム回転ロック解除。');
+                    }
+                }
+            };
+
             document.querySelectorAll('.cut-wire').forEach(w => {
                 w.classList.remove('cut');
-                w.onpointerenter = (e) => { if(e.buttons>0 && !w.classList.contains('cut')){ w.classList.add('cut'); AudioSys.sfx.glass(); stageState.cuts++; UI.log(`ワイヤー切断 (${stageState.cuts}/4)`); } };
+                w.onpointerenter = (e) => { if(e.buttons > 0) handleCut(w); };
+                w.onpointerdown = (e) => { e.stopPropagation(); handleCut(w); };
             });
+
             const bSw = document.getElementById('back-switch');
-            bSw.onpointerdown = (e) => { e.stopPropagation(); if(stageState.cuts>=4 && !stageState.power){ bSw.className='switch-on'; bSw.textContent='ON'; stageState.power=true; AudioSys.sfx.thud(); UI.log('電源オン'); UI.btn.classList.remove('disabled'); } };
-            stageState.downF = (e) => { if(e.target.closest('#the-button')) return; stageState.sx = getEventPos(e).x; stageState.dragF = true; };
-            stageState.upF = () => { stageState.dragF = false; stageState.rot = stageState.curRot || stageState.rot; };
-            stageState.moveF = (e) => { if(stageState.dragF){ const dx = getEventPos(e).x - stageState.sx; let ang = stageState.rot + dx*0.6; frame.style.transform = `rotateY(${ang}deg)`; stageState.curRot = ang; } };
-            frame.addEventListener('pointerdown', stageState.downF); document.addEventListener('pointerup', stageState.upF); document.addEventListener('pointermove', stageState.moveF);
+            bSw.onpointerdown = (e) => { 
+                e.stopPropagation(); 
+                if(stageState.cuts >= 4 && !stageState.power){ 
+                    bSw.className = 'switch-on'; 
+                    bSw.textContent = 'ON'; 
+                    stageState.power = true; 
+                    AudioSys.sfx.thud(); 
+                    UI.log('電源オン'); 
+                    UI.btn.classList.remove('disabled'); 
+                } 
+            };
+
+            stageState.downF = (e) => { 
+                if(e.target.closest('#the-button')) return; 
+                // 4本切断されるまでは回転不可！
+                if(stageState.cuts < 4) return;
+                stageState.sx = getEventPos(e).x; 
+                stageState.dragF = true; 
+            };
+            stageState.upF = () => { 
+                stageState.dragF = false; 
+                stageState.rot = stageState.curRot || stageState.rot; 
+            };
+            stageState.moveF = (e) => { 
+                if(!stageState.dragF || stageState.cuts < 4) return; 
+                const dx = getEventPos(e).x - stageState.sx; 
+                let ang = stageState.rot + dx * 0.6; 
+                frame.style.transform = `rotateY(${ang}deg)`; 
+                stageState.curRot = ang; 
+            };
+            frame.addEventListener('pointerdown', stageState.downF); 
+            document.addEventListener('pointerup', stageState.upF); 
+            document.addEventListener('pointermove', stageState.moveF);
         },
-        down(e) { if(stageState.power){ UI.btn.classList.add('pressed'); AudioSys.sfx.click(); completeStage(); } else { AudioSys.sfx.buzz(); } },
+        down(e) { 
+            if(stageState.power){ 
+                UI.btn.classList.add('pressed'); 
+                AudioSys.sfx.click(); 
+                completeStage(); 
+            } else { 
+                AudioSys.sfx.dullClick(); 
+            } 
+        },
         up() { UI.btn.classList.remove('pressed'); },
-        cleanup() { frame.removeEventListener('pointerdown', stageState.downF); document.removeEventListener('pointerup', stageState.upF); document.removeEventListener('pointermove', stageState.moveF); frame.style.transform=''; document.querySelectorAll('.cut-wire').forEach(w=>w.onpointerenter=null); }
+        cleanup() { 
+            frame.removeEventListener('pointerdown', stageState.downF); 
+            document.removeEventListener('pointerup', stageState.upF); 
+            document.removeEventListener('pointermove', stageState.moveF); 
+            frame.style.transform = ''; 
+            document.querySelectorAll('.cut-wire').forEach(w => {
+                w.onpointerenter = null;
+                w.onpointerdown = null;
+            }); 
+        }
     },
     // 07: CODE (Dial: R1, L2, R1, L2, R2 -> PUSH)
     7: {
@@ -835,8 +1001,17 @@ const STAGES = {
             // LED 4: Wires & DIP (10110111 => on,off,on,on,off,on,on,on)
             document.getElementById('wires-container').style.display='block'; document.getElementById('dip-switches').style.display='grid';
             stageState.cuts = 0; stageState.dips = [0,0,0,0,0,0,0,0];
+            const handleCutEX = (w) => {
+                if (!w.classList.contains('cut')) {
+                    w.classList.add('cut');
+                    AudioSys.sfx.wireCut();
+                    stageState.cuts++;
+                }
+            };
             document.querySelectorAll('.cut-wire').forEach(w => {
-                w.classList.remove('cut'); w.onpointerenter = (e) => { if(e.buttons>0 && !w.classList.contains('cut')){ w.classList.add('cut'); AudioSys.sfx.glass(); stageState.cuts++; } };
+                w.classList.remove('cut'); 
+                w.onpointerenter = (e) => { if(e.buttons > 0) handleCutEX(w); };
+                w.onpointerdown = (e) => { e.stopPropagation(); handleCutEX(w); };
             });
             document.querySelectorAll('.dip').forEach((d,i) => {
                 d.onpointerdown = (e) => {
@@ -845,9 +1020,9 @@ const STAGES = {
                     if(stageState.cuts>=4 && stageState.dips.join('') === '10110111') { stageState.st[3]=true; UI.setLED(3, 'green'); AudioSys.sfx.thud(); chk(); }
                 };
             });
-            stageState.downF = (e) => { if(e.target.closest('#the-button')) return; stageState.sx = getEventPos(e).x; stageState.dragF = true; };
+            stageState.downF = (e) => { if(e.target.closest('#the-button')) return; if(stageState.cuts < 4) return; stageState.sx = getEventPos(e).x; stageState.dragF = true; };
             stageState.upF = () => { stageState.dragF = false; stageState.rot = stageState.curRot || stageState.rot || 0; };
-            stageState.moveF = (e) => { if(stageState.dragF){ let ang = (stageState.rot||0) + (getEventPos(e).x - stageState.sx)*0.6; frame.style.transform = `rotateY(${ang}deg)`; stageState.curRot = ang; } };
+            stageState.moveF = (e) => { if(stageState.dragF && stageState.cuts >= 4){ let ang = (stageState.rot||0) + (getEventPos(e).x - stageState.sx)*0.6; frame.style.transform = `rotateY(${ang}deg)`; stageState.curRot = ang; } };
             frame.addEventListener('pointerdown', stageState.downF); document.addEventListener('pointerup', stageState.upF); document.addEventListener('pointermove', stageState.moveF);
             
             // LED 5: LOCKED Rotate (R360, L360, R360)
