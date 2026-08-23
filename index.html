@@ -99,7 +99,8 @@
 
         /* THE BUTTON (青色) */
         #the-button { width: 200px; height: 200px; border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; transform-style: preserve-3d; transition: transform 0.1s; cursor: pointer; z-index: 10; }
-        .btn-face-front { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #3b82f6, #1d4ed8 60%, #1e3a8a); border: 8px solid var(--metal-base); box-shadow: inset 0px 5px 10px rgba(255,255,255,0.4), inset 0px -10px 20px rgba(0,0,0,0.8), 0 10px 15px rgba(0,0,0,0.7), 0 0 20px rgba(2, 132, 199, 0.4); display: flex; justify-content: center; align-items: center; transition: transform 0.1s, box-shadow 0.1s, background 0.2s; }
+        .btn-face-front { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #3b82f6, #1d4ed8 60%, #1e3a8a); border: 8px solid var(--metal-base); box-shadow: inset 0px 5px 10px rgba(255,255,255,0.4), inset 0px -10px 20px rgba(0,0,0,0.8), 0 10px 15px rgba(0,0,0,0.7), 0 0 20px rgba(2, 132, 199, 0.4); display: flex; flex-direction: column; justify-content: center; align-items: center; transition: transform 0.1s, box-shadow 0.1s, background 0.2s; }
+        .btn-sub-num { font-size: 1.5rem; font-weight: bold; color: var(--core-cyan); text-shadow: 0 0 8px var(--core-cyan), 1px 1px 2px #000; margin-bottom: -4px; pointer-events: none; display: none; font-family: 'Courier New', monospace; letter-spacing: 2px; }
         .btn-text { font-size: 2rem; font-weight: bold; color: rgba(0,0,0,0.5); text-shadow: 1px 1px 1px rgba(255,255,255,0.2); pointer-events: none; }
         #the-button.pressed .btn-face-front { transform: translateY(6px) scale(0.98); box-shadow: inset 0px 5px 15px rgba(0,0,0,0.8), 0 3px 5px rgba(0,0,0,0.8); }
         #the-button.disabled .btn-face-front { background: radial-gradient(circle at 30% 30%, #475569, #1e293b 60%, #0f172a); border-color: #0f172a; box-shadow: inset 0px 5px 10px rgba(255,255,255,0.1), inset 0px -10px 20px rgba(0,0,0,0.8); filter: grayscale(1); }
@@ -327,7 +328,10 @@
                     <div id="skill-hud"><div class="skill-safe-zone"></div><div id="skill-needle"></div></div>
                     <div id="center-socket" class="char-target"></div>
                     <div id="the-button">
-                        <div class="btn-face-front" id="btn-face"><span class="btn-text" id="btn-text">PUSH</span></div>
+                        <div class="btn-face-front" id="btn-face">
+                            <span class="btn-sub-num" id="btn-sub-num">10</span>
+                            <span class="btn-text" id="btn-text">PUSH</span>
+                        </div>
                         <div id="barrier"></div>
                     </div>
                 </div>
@@ -414,7 +418,10 @@ const AudioSys = {
         click() { AudioSys.playOsc('sine', 800, 0.05, 0.1); },
         thud() { AudioSys.playOsc('triangle', 100, 0.1, 0.2); },
         beep() { AudioSys.playOsc('square', 600, 0.1, 0.1); },
-        buzz() { AudioSys.playOsc('sawtooth', 150, 0.3, 0.3); },
+        buzz() { 
+            AudioSys.playOsc('sawtooth', 130, 0.12, 0.1); 
+            setTimeout(() => AudioSys.playOsc('sawtooth', 105, 0.22, 0.1), 120); 
+        },
         success() { AudioSys.playOsc('sine', 1046.50, 0.1, 0.1); setTimeout(() => AudioSys.playOsc('sine', 1318.51, 0.15, 0.1), 100); setTimeout(() => AudioSys.playOsc('sine', 1567.98, 0.2, 0.1), 200); },
         glass() { AudioSys.playNoise(0.2, 0.3, 'spark'); AudioSys.playOsc('square', 2000, 0.1, 0.1); },
         wireCut() { AudioSys.playOsc('sine', 950, 0.03, 0.06); AudioSys.playNoise(0.03, 0.05, 'spark'); },
@@ -511,6 +518,8 @@ function loadStage(num) {
     document.getElementById('barrier').style.display = 'none';
     document.getElementById('chip-container').style.display = 'none';
     document.getElementById('fukidashi').style.display = 'none';
+    const bsn = document.getElementById('btn-sub-num');
+    if (bsn) bsn.style.display = 'none';
     
     if (num === 6) {
         UI.btn.className = 'disabled';
@@ -765,7 +774,12 @@ const STAGES = {
     // 05: DRAG&DROP (ログ上の数字をドラッグしてボタンにドロップ)
     5: {
         init() {
-            document.getElementById('btn-text').textContent = '[0/10]';
+            const bsn = document.getElementById('btn-sub-num');
+            if (bsn) {
+                bsn.style.display = 'block';
+                bsn.textContent = '10';
+            }
+            document.getElementById('btn-text').textContent = 'PUSH';
             stageState.sum = 0;
             stageState.dragging = null;
             document.getElementById('chip-container').style.display = 'none';
@@ -816,7 +830,6 @@ const STAGES = {
                     if (dist < 110) {
                         stageState.sum += stageState.val;
                         stageState.srcSpan.classList.add('used');
-                        document.getElementById('btn-text').textContent = `[${stageState.sum}/10]`;
                         AudioSys.sfx.thud();
                         UI.log(`ロード完了: +${stageState.val} (合計: ${stageState.sum})`);
 
@@ -839,6 +852,9 @@ const STAGES = {
             document.addEventListener('pointerup', stageState.onup);
         },
         cleanup() {
+            const bsn = document.getElementById('btn-sub-num');
+            if (bsn) bsn.style.display = 'none';
+            document.getElementById('btn-text').textContent = 'PUSH';
             document.removeEventListener('pointermove', stageState.onmove);
             document.removeEventListener('pointerup', stageState.onup);
             if (stageState.dragEl) { stageState.dragEl.remove(); }
