@@ -152,6 +152,36 @@
         .log-entry { margin: 2px 0; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
 
+        .log-num-drag {
+            display: inline-block;
+            padding: 1px 7px;
+            margin: 0 3px;
+            background: rgba(0, 240, 255, 0.15);
+            border: 1px solid var(--core-cyan);
+            border-radius: 4px;
+            color: var(--core-cyan);
+            font-weight: bold;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            box-shadow: 0 0 5px rgba(0, 240, 255, 0.3);
+            transition: transform 0.1s ease, background 0.1s ease;
+        }
+        .log-num-drag:hover {
+            background: var(--core-cyan);
+            color: #000;
+            box-shadow: 0 0 10px var(--core-cyan);
+            transform: scale(1.15);
+        }
+        .log-num-drag.used {
+            opacity: 0.3;
+            pointer-events: none;
+            border-color: #555;
+            color: #777;
+            background: transparent;
+            box-shadow: none;
+        }
+
         @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
         .shake { animation: shake 0.5s; }
 
@@ -482,6 +512,11 @@ function loadStage(num) {
     document.getElementById('chip-container').style.display = 'none';
     document.getElementById('fukidashi').style.display = 'none';
     
+    if (num === 6) {
+        UI.btn.className = 'disabled';
+        document.getElementById('wires-container').style.display = 'block';
+    }
+    
 
     document.getElementById('transition-overlay').style.opacity = '1';
     const intro = document.getElementById('sector-intro');
@@ -609,7 +644,7 @@ const STAGES = {
             if(td) { td.style.opacity = '0'; }
         }
     },
-    // 04: FLICKS (一筆書き連続軌道＆リワインド復帰)
+    // 04: FLICKS (一筆書き連続軌道＆LOCKED突き刺さり＆リワインド復帰)
     4: {
         init() { 
             stageState.idx = 0; 
@@ -639,11 +674,11 @@ const STAGES = {
             stageState.rewinding = true;
             const checkpoints = [
                 [0, 0],       // P0 (中央)
-                [0, -60],     // P1 (上)
-                [60, -60],    // P2 (右上)
-                [60, 60],     // P3 (右下)
-                [-60, 60],    // P4 (左下)
-                [-60, 0]      // P5 (左中)
+                [0, -55],     // P1 (上)
+                [60, -55],    // P2 (右上)
+                [60, 55],     // P3 (右下)
+                [-60, 55],    // P4 (左下)
+                [0, -90]      // P5 (LOCKED突き刺さり)
             ];
 
             const rewindPath = [];
@@ -662,9 +697,9 @@ const STAGES = {
                     return;
                 }
                 const nextPt = rewindPath.shift();
-                UI.btnFrame.style.transition = 'transform 0.09s linear';
+                UI.btnFrame.style.transition = 'transform 0.08s linear';
                 UI.btnFrame.style.transform = `translate(${nextPt[0]}px, ${nextPt[1]}px)`;
-                setTimeout(stepRewind, 90);
+                setTimeout(stepRewind, 80);
             };
             stepRewind();
         },
@@ -678,17 +713,17 @@ const STAGES = {
             let curY = 0;
 
             if (stageState.idx === 0) {
-                // Step 0: [0, 0] -> [0, -60] (上へ)
+                // Step 0: [0, 0] -> [0, -55] (上へ)
                 curX = 0;
-                curY = Math.min(0, Math.max(-60, rawDy));
-                if (curY <= -55) {
+                curY = Math.min(0, Math.max(-55, rawDy));
+                if (curY <= -50) {
                     stageState.idx = 1;
                     stageState.startX = p.x;
                     stageState.startY = p.y;
                 }
             } else if (stageState.idx === 1) {
-                // Step 1: [0, -60] -> [60, -60] (右へ)
-                curY = -60;
+                // Step 1: [0, -55] -> [60, -55] (右へ)
+                curY = -55;
                 curX = Math.max(0, Math.min(60, rawDx));
                 if (curX >= 55) {
                     stageState.idx = 2;
@@ -696,17 +731,17 @@ const STAGES = {
                     stageState.startY = p.y;
                 }
             } else if (stageState.idx === 2) {
-                // Step 2: [60, -60] -> [60, 60] (下へ)
+                // Step 2: [60, -55] -> [60, 55] (下へ)
                 curX = 60;
-                curY = Math.min(60, Math.max(-60, -60 + rawDy));
-                if (curY >= 55) {
+                curY = Math.min(55, Math.max(-55, -55 + rawDy));
+                if (curY >= 50) {
                     stageState.idx = 3;
                     stageState.startX = p.x;
                     stageState.startY = p.y;
                 }
             } else if (stageState.idx === 3) {
-                // Step 3: [60, 60] -> [-60, 60] (左へ)
-                curY = 60;
+                // Step 3: [60, 55] -> [-60, 55] (左へ)
+                curY = 55;
                 curX = Math.max(-60, Math.min(60, 60 + rawDx));
                 if (curX <= -55) {
                     stageState.idx = 4;
@@ -714,14 +749,14 @@ const STAGES = {
                     stageState.startY = p.y;
                 }
             } else if (stageState.idx === 4) {
-                // Step 4: [-60, 60] -> [-60, 0] (上へ・一周完了)
-                curX = -60;
-                curY = Math.max(0, Math.min(60, 60 + rawDy));
-                if (curY <= 5) {
+                // Step 4: [-60, 55] -> [0, -90] (中央上へ駆け上がりLOCKEDに突き刺さる！)
+                const progress = Math.min(1, Math.max(0, -rawDy / 145));
+                curX = -60 + 60 * progress;
+                curY = 55 - 145 * progress;
+                if (curY <= -85) {
                     stageState.idx = 5;
                     stageState.dragging = false;
-                    UI.btnFrame.style.transition = 'transform 0.15s ease-out';
-                    UI.btnFrame.style.transform = '';
+                    UI.btnFrame.style.transform = `translate(0px, -90px)`;
                     setTimeout(() => completeStage(), 150);
                     return;
                 }
@@ -736,38 +771,89 @@ const STAGES = {
             UI.btn.style.transform = '';
         }
     },
-    // 05: DRAG&DROP (Sum to 10)
+    // 05: DRAG&DROP (ログ上の数字をドラッグしてボタンにドロップ)
     5: {
         init() {
-            document.getElementById('btn-text').textContent = '[10]';
-            const cont = document.getElementById('chip-container'); cont.style.display = 'flex';
-            cont.innerHTML = ''; stageState.sum = 0; stageState.dragging = null;
-            [5,4,3,2,1].forEach(v => {
-                const c = document.createElement('div'); c.className = 'chip'; c.textContent = v; c.dataset.val = v;
-                c.onpointerdown = (e) => { e.stopPropagation(); stageState.dragging = c; c.style.position='fixed'; c.style.zIndex=1000; stageState.mx=e.clientX; stageState.my=e.clientY; c.style.left = (e.clientX-22)+'px'; c.style.top = (e.clientY-22)+'px'; AudioSys.sfx.click(); };
-                cont.appendChild(c);
+            document.getElementById('btn-text').textContent = '[0/10]';
+            stageState.sum = 0;
+            stageState.dragging = null;
+            document.getElementById('chip-container').style.display = 'none';
+
+            // ログエリアにドラッグ可能な数字要素を出力
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `> COUNT: <span class="log-num-drag" data-val="5">5</span>... <span class="log-num-drag" data-val="4">4</span>... <span class="log-num-drag" data-val="3">3</span>... <span class="log-num-drag" data-val="2">2</span>... <span class="log-num-drag" data-val="1">1</span>...`;
+            UI.logArea.appendChild(logEntry);
+            document.getElementById('log-wrapper').scrollTop = document.getElementById('log-wrapper').scrollHeight;
+
+            // 各数字のドラッグイベント
+            logEntry.querySelectorAll('.log-num-drag').forEach(span => {
+                span.onpointerdown = (e) => {
+                    e.stopPropagation();
+                    if (span.classList.contains('used')) return;
+                    
+                    const val = parseInt(span.dataset.val);
+                    const clone = span.cloneNode(true);
+                    clone.classList.add('dragging');
+                    clone.style.position = 'fixed';
+                    clone.style.left = (e.clientX - 15) + 'px';
+                    clone.style.top = (e.clientY - 15) + 'px';
+                    clone.style.zIndex = '10000';
+                    document.body.appendChild(clone);
+                    
+                    stageState.dragEl = clone;
+                    stageState.srcSpan = span;
+                    stageState.val = val;
+                    AudioSys.sfx.click();
+                };
             });
-            UI.log('COUNT: [5]...[4]... [3]... [2]... [1]...');
-            stageState.onmove = (e) => { if(stageState.dragging){ stageState.dragging.style.left = (e.clientX-22)+'px'; stageState.dragging.style.top = (e.clientY-22)+'px'; } };
-            stageState.onup = (e) => {
-                if(stageState.dragging) {
-                    const rect = UI.btn.getBoundingClientRect();
-                    const cx = rect.left + rect.width/2; const cy = rect.top + rect.height/2;
-                    const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
-                    if (dist < 100) {
-                        stageState.sum += parseInt(stageState.dragging.dataset.val);
-                        stageState.dragging.remove(); AudioSys.sfx.thud(); UI.log(`ロード完了: +${stageState.dragging.dataset.val} (合計: ${stageState.sum})`);
-                        if (stageState.sum === 10) completeStage();
-                        else if (stageState.sum > 10) { AudioSys.sfx.buzz(); UI.log('オーバーフロー発生'); STAGES[5].init(); } // Reset
-                    } else { stageState.dragging.style.position=''; stageState.dragging.style.left=''; stageState.dragging.style.top=''; }
-                    stageState.dragging = null;
+
+            stageState.onmove = (e) => {
+                if (stageState.dragEl) {
+                    stageState.dragEl.style.left = (e.clientX - 15) + 'px';
+                    stageState.dragEl.style.top = (e.clientY - 15) + 'px';
                 }
             };
-            document.addEventListener('pointermove', stageState.onmove); document.addEventListener('pointerup', stageState.onup);
+
+            stageState.onup = (e) => {
+                if (stageState.dragEl) {
+                    const rect = UI.btn.getBoundingClientRect();
+                    const cx = rect.left + rect.width / 2;
+                    const cy = rect.top + rect.height / 2;
+                    const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+
+                    if (dist < 110) {
+                        stageState.sum += stageState.val;
+                        stageState.srcSpan.classList.add('used');
+                        document.getElementById('btn-text').textContent = `[${stageState.sum}/10]`;
+                        AudioSys.sfx.thud();
+                        UI.log(`ロード完了: +${stageState.val} (合計: ${stageState.sum})`);
+
+                        if (stageState.sum === 10) {
+                            completeStage();
+                        } else if (stageState.sum > 10) {
+                            AudioSys.sfx.buzz();
+                            UI.log('エラー: オーバーフロー発生 (リセット)');
+                            setTimeout(() => { if (currentStage === 5) STAGES[5].init(); }, 600);
+                        }
+                    }
+
+                    stageState.dragEl.remove();
+                    stageState.dragEl = null;
+                    stageState.srcSpan = null;
+                }
+            };
+
+            document.addEventListener('pointermove', stageState.onmove);
+            document.addEventListener('pointerup', stageState.onup);
         },
-        cleanup() { document.removeEventListener('pointermove', stageState.onmove); document.removeEventListener('pointerup', stageState.onup); }
+        cleanup() {
+            document.removeEventListener('pointermove', stageState.onmove);
+            document.removeEventListener('pointerup', stageState.onup);
+            if (stageState.dragEl) { stageState.dragEl.remove(); }
+        }
     },
-    // 06: SWIPE (Cut 4 wires, flip, switch ON)
+    // 06: SWIPE (Cut 4 wires by swiping, flip, switch ON)
     6: {
         init() {
             UI.btn.classList.add('disabled'); 
@@ -780,23 +866,35 @@ const STAGES = {
             stageState.rot = 0; 
             stageState.dragF = false;
 
-            const handleCut = (w) => {
-                if (!w.classList.contains('cut')) {
-                    w.classList.add('cut');
-                    AudioSys.sfx.wireCut();
-                    stageState.cuts++;
-                    UI.log(`ワイヤー切断 (${stageState.cuts}/4)`);
-                    if (stageState.cuts >= 4) {
-                        UI.log('ワイヤー全切断。フレーム回転ロック解除。');
-                    }
-                }
-            };
-
             document.querySelectorAll('.cut-wire').forEach(w => {
                 w.classList.remove('cut');
-                w.onpointerenter = (e) => { if(e.buttons > 0) handleCut(w); };
-                w.onpointerdown = (e) => { e.stopPropagation(); handleCut(w); };
+                w.onpointerdown = null;
+                w.onpointerenter = null;
             });
+
+            // ドラッグ・スワイプでなぞった時のみ切断する判定
+            const checkWireSlice = (cx, cy) => {
+                document.querySelectorAll('.cut-wire').forEach(w => {
+                    if (!w.classList.contains('cut')) {
+                        const r = w.getBoundingClientRect();
+                        if (cx >= r.left - 8 && cx <= r.right + 8 && cy >= r.top - 8 && cy <= r.bottom + 8) {
+                            w.classList.add('cut');
+                            AudioSys.sfx.wireCut();
+                            stageState.cuts++;
+                            UI.log(`ワイヤー切断 (${stageState.cuts}/4)`);
+                            if (stageState.cuts >= 4) {
+                                UI.log('ワイヤー全切断。フレーム回転ロック解除。');
+                            }
+                        }
+                    }
+                });
+            };
+
+            stageState.onSliceMove = (e) => {
+                const p = getEventPos(e);
+                checkWireSlice(p.x, p.y);
+            };
+            document.addEventListener('pointermove', stageState.onSliceMove);
 
             const bSw = document.getElementById('back-switch');
             bSw.onpointerdown = (e) => { 
@@ -847,11 +945,8 @@ const STAGES = {
             frame.removeEventListener('pointerdown', stageState.downF); 
             document.removeEventListener('pointerup', stageState.upF); 
             document.removeEventListener('pointermove', stageState.moveF); 
+            document.removeEventListener('pointermove', stageState.onSliceMove);
             frame.style.transform = ''; 
-            document.querySelectorAll('.cut-wire').forEach(w => {
-                w.onpointerenter = null;
-                w.onpointerdown = null;
-            }); 
         }
     },
     // 07: CODE (Dial: R1, L2, R1, L2, R2 -> PUSH)
