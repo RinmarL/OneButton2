@@ -1460,29 +1460,119 @@ const STAGES = {
     // 09: HISTORY
     9: {
         init() {
-            const la = UI.logArea; la.innerHTML='';
-            for(let i=0; i<30; i++) { const d=document.createElement('div'); d.className='log-entry'; d.textContent=`> [SYS] TRACE LOG ${Math.floor(Math.random()*9000)}`; la.appendChild(d); }
-            const hint = document.createElement('div'); hint.className='log-entry'; hint.style.color='#f97316'; hint.textContent='> [BOOT_LOG]: 押し込む -> 右へフリック -> 2秒間ホールド'; la.appendChild(hint);
-            for(let i=0; i<10; i++) { const d=document.createElement('div'); d.className='log-entry'; d.textContent=`> [DATA] 0x${Math.floor(Math.random()*65535).toString(16)}`; la.appendChild(d); }
-            const err1 = document.createElement('div'); err1.className='log-entry'; err1.style.color='#ef4444'; err1.textContent='> エラー: データ破損を検知'; la.appendChild(err1);
-            const err2 = document.createElement('div'); err2.className='log-entry'; err2.style.color='#ef4444'; err2.textContent='> 起動コマンドを入れてください'; la.appendChild(err2);
+            const la = UI.logArea; la.innerHTML = '';
+            for(let i = 0; i < 25; i++) {
+                const d = document.createElement('div');
+                d.className = 'log-entry';
+                d.textContent = `> [SYS] TRACE LOG ${Math.floor(Math.random()*9000)}`;
+                la.appendChild(d);
+            }
+            // ヒントログを緑色で3行に分けて出力
+            const h1 = document.createElement('div'); h1.className = 'log-entry'; h1.style.color = '#22c55e'; h1.style.fontWeight = 'bold'; h1.textContent = '> [BOOT_LOG]: 押し込む'; la.appendChild(h1);
+            const h2 = document.createElement('div'); h2.className = 'log-entry'; h2.style.color = '#22c55e'; h2.style.fontWeight = 'bold'; h2.textContent = '> [BOOT_LOG]: 右フリック'; la.appendChild(h2);
+            const h3 = document.createElement('div'); h3.className = 'log-entry'; h3.style.color = '#22c55e'; h3.style.fontWeight = 'bold'; h3.textContent = '> [BOOT_LOG]: 2秒ホールド'; la.appendChild(h3);
+            
+            for(let i = 0; i < 10; i++) {
+                const d = document.createElement('div');
+                d.className = 'log-entry';
+                d.textContent = `> [DATA] 0x${Math.floor(Math.random()*65535).toString(16)}`;
+                la.appendChild(d);
+            }
+            const err1 = document.createElement('div'); err1.className = 'log-entry'; err1.style.color = '#ef4444'; err1.textContent = '> エラー: データ破損を検知'; la.appendChild(err1);
+            const err2 = document.createElement('div'); err2.className = 'log-entry'; err2.style.color = '#ef4444'; err2.textContent = '> 起動コマンドを入れてください'; la.appendChild(err2);
             
             document.getElementById('log-wrapper').scrollTop = document.getElementById('log-wrapper').scrollHeight;
-            stageState.seq = 0; stageState.t = 0; stageState.drag = false;
+
+            stageState.step = 0; // 0: 未開始, 1: 押し込み完了, 2: 右スライド完了
+            stageState.isBtnDown = false;
+            stageState.dragFrame = false;
+            stageState.fStartX = 0;
+            stageState.fStartY = 0;
+            stageState.curX = 0;
+            stageState.curY = 0;
+            frame.style.transform = 'translate(0px, 0px)';
+            frame.style.transition = '';
+
+            // フレーム全体の4方向スライド処理
+            stageState.downFrame = (e) => {
+                const p = getEventPos(e);
+                stageState.fStartX = p.x - stageState.curX;
+                stageState.fStartY = p.y - stageState.curY;
+                stageState.dragFrame = true;
+                frame.style.transition = 'none';
+            };
+
+            stageState.moveFrame = (e) => {
+                if (!stageState.dragFrame) return;
+                const p = getEventPos(e);
+                stageState.curX = p.x - stageState.fStartX;
+                stageState.curY = p.y - stageState.fStartY;
+
+                // 上下左右4方向に自由にスライド（適度な可動範囲制限 ±120px）
+                const clampedX = Math.max(-120, Math.min(120, stageState.curX));
+                const clampedY = Math.max(-120, Math.min(120, stageState.curY));
+                frame.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+
+                // 右へ一定以上スライドしたか判定
+                if (clampedX >= 55) {
+                    if (stageState.step === 1) {
+                        stageState.step = 2;
+                        AudioSys.sfx.beep();
+                    }
+                }
+            };
+
+            stageState.upFrame = () => {
+                if (!stageState.dragFrame) return;
+                stageState.dragFrame = false;
+                // 手を離したらスプリングで定位置に戻る
+                stageState.curX = 0;
+                stageState.curY = 0;
+                frame.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                frame.style.transform = 'translate(0px, 0px)';
+            };
+
+            frame.addEventListener('pointerdown', stageState.downFrame);
+            document.addEventListener('pointermove', stageState.moveFrame);
+            document.addEventListener('pointerup', stageState.upFrame);
         },
         down(e) {
-            UI.btn.classList.add('pressed'); AudioSys.sfx.click(); stageState.drag=true; stageState.sx = getEventPos(e).x;
-            if(stageState.seq===2) { stageState.t = Date.now(); stageState.hold = setTimeout(()=>{ if(stageState.drag){ completeStage(); } }, 2000); }
-        },
-        up() {
-            UI.btn.classList.remove('pressed'); stageState.drag=false; clearTimeout(stageState.hold);
-            if(stageState.seq===0) { stageState.seq=1; AudioSys.sfx.beep(); }
-            else if(stageState.seq===2) { stageState.seq=0; AudioSys.sfx.buzz(); }
-        },
-        winMove(e) {
-            if(stageState.drag && stageState.seq===1) {
-                if(getEventPos(e).x - stageState.sx > 50) { stageState.seq=2; AudioSys.sfx.beep(); stageState.drag=false; }
+            stageState.isBtnDown = true;
+            UI.btn.classList.add('pressed');
+            AudioSys.sfx.click();
+
+            if (stageState.step === 2) {
+                // Step 3: 2秒間ホールド
+                stageState.holdTimer = setTimeout(() => {
+                    if (stageState.isBtnDown && stageState.step === 2) {
+                        completeStage();
+                    }
+                }, 2000);
             }
+        },
+        up(e) {
+            if (!stageState.isBtnDown) return;
+            stageState.isBtnDown = false;
+            UI.btn.classList.remove('pressed');
+            clearTimeout(stageState.holdTimer);
+
+            if (stageState.step === 0) {
+                // Step 1: 押し込む（1回押して離した）
+                stageState.step = 1;
+                AudioSys.sfx.beep();
+            } else if (stageState.step === 2) {
+                // 2秒ホールド未満で離してしまった場合、リセット
+                AudioSys.sfx.buzz();
+                stageState.step = 0;
+            }
+        },
+        cleanup() {
+            clearTimeout(stageState.holdTimer);
+            frame.removeEventListener('pointerdown', stageState.downFrame);
+            document.removeEventListener('pointermove', stageState.moveFrame);
+            document.removeEventListener('pointerup', stageState.upFrame);
+            frame.style.transform = '';
+            frame.style.transition = '';
         }
     },
     // 10: RELATIONSHIP
