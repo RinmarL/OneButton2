@@ -32,7 +32,7 @@
         #pressure-fill { height: 100%; width: 0%; background: var(--alert-blue); transition: width 0.05s linear; }
 
         /* DIGITAL DISPLAY */
-        #digital-display { width: 220px; height: 55px; position: relative; transform-style: preserve-3d; margin-bottom: 40px; z-index: 10; cursor: grab; }
+        #digital-display { width: 220px; height: 55px; position: relative; transform-style: preserve-3d; margin-bottom: 40px; z-index: 10; cursor: default; }
         .display-front, .display-back { position: absolute; top: 0; left: 0; width: 100%; height: 100%; font-size: 2.2rem; font-weight: bold; border-radius: 8px; display: flex; justify-content: center; align-items: center; backface-visibility: hidden; }
         .display-front { background: #111; border: 2px solid #333; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); color: var(--alert-red); text-shadow: 0 0 15px var(--alert-red); letter-spacing: 2px; }
         .display-front.open { color: var(--led-green); text-shadow: 0 0 15px var(--led-green), 0 0 30px var(--led-green); }
@@ -566,7 +566,7 @@ function loadStage(num) {
     // UI Reset
     const disp = document.getElementById('digital-display'); const dispText = document.getElementById('display-front-text');
     if(dispText) { dispText.innerHTML = 'L<span id="char-o2" class="char-target">O</span>CKED'; dispText.classList.remove('open'); }
-    if(disp) { disp.className = 'locked'; disp.style.transform = ''; }
+    if(disp) { disp.className = 'locked'; disp.style.transform = ''; disp.style.cursor = 'default'; }
     UI.btn.className = ''; UI.btn.style.transform = ''; frame.style.transform = ''; frame.style.left = ''; frame.style.top = '';
     document.getElementById('btn-text').textContent = 'PUSH';
     document.getElementById('pressure-bar').style.display = 'none';
@@ -972,10 +972,6 @@ const STAGES = {
                             w.classList.add('cut');
                             AudioSys.sfx.wireCut();
                             stageState.cuts++;
-                            UI.log(`ワイヤー切断 (${stageState.cuts}/4)`);
-                            if (stageState.cuts >= 4) {
-                                UI.log('ワイヤー全切断。フレーム回転ロック解除。');
-                            }
                         }
                     }
                 });
@@ -1318,6 +1314,7 @@ const STAGES = {
             
             // LED 5: LOCKED Rotate (R360, L360, R360)
             const disp = document.getElementById('digital-display');
+            if (disp) disp.style.cursor = 'grab';
             stageState.dSeq = [360, -360, 360]; stageState.dIdx = 0; stageState.dAng = 0; stageState.dragD = false;
             disp.onpointerdown = (e) => { const r = disp.getBoundingClientRect(); stageState.dcx=r.left+r.width/2; stageState.dcy=r.top+r.height/2; stageState.lAng=Math.atan2(getEventPos(e).y-stageState.dcy, getEventPos(e).x-stageState.dcx); stageState.dragD=true; };
             stageState.upD = () => { stageState.dragD = false; };
@@ -1362,7 +1359,19 @@ const STAGES = {
                 stageState.curDeg = undefined; document.getElementById('skill-needle').style.transform='rotate(180deg)';
             }
         },
-        cleanup() { cancelAnimationFrame(stageState.hAnim); document.removeEventListener('pointerup', stageState.upD); document.removeEventListener('pointermove', stageState.moveD); frame.removeEventListener('pointerdown', stageState.downF); document.removeEventListener('pointerup', stageState.upF); document.removeEventListener('pointermove', stageState.moveF); document.removeEventListener('pointerdown', stageState.onSliceDownEX); document.removeEventListener('pointermove', stageState.onSliceMoveEX); document.removeEventListener('pointerup', stageState.onSliceUpEX); }
+        cleanup() {
+            cancelAnimationFrame(stageState.hAnim);
+            document.removeEventListener('pointerup', stageState.upD);
+            document.removeEventListener('pointermove', stageState.moveD);
+            frame.removeEventListener('pointerdown', stageState.downF);
+            document.removeEventListener('pointerup', stageState.upF);
+            document.removeEventListener('pointermove', stageState.moveF);
+            document.removeEventListener('pointerdown', stageState.onSliceDownEX);
+            document.removeEventListener('pointermove', stageState.onSliceMoveEX);
+            document.removeEventListener('pointerup', stageState.onSliceUpEX);
+            const disp = document.getElementById('digital-display');
+            if (disp) disp.style.cursor = 'default';
+        }
     }
 };
 
