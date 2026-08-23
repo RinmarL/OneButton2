@@ -1789,9 +1789,28 @@ const STAGES = {
     // 11: FINAL (EX)
     11: {
         init() {
-            UI.log('[BOOT] セクターEX 緊急プロトコル・ロード完了。');
-            UI.log('[SYS_MEMO]: 横断歩道は気を付けて渡ること'); UI.log('[SYS_MEMO]: 右を見て、左を見て、もう1度右を見て進むこと');
+            UI.clearLog();
+            UI.log('セクター EX をロード中...');
+
+            // 上部: 本物のヒントSYS_MEMO
+            UI.log('[SYS_MEMO]: 横断歩道は気を付けて渡ること');
+            UI.log('[SYS_MEMO]: 右を見て、左を見て、もう1度右を見て進むこと');
             UI.log('[SYS_MEMO]: 10110111');
+
+            // 中間: 世界観・ダミーのSYS_MEMO行
+            UI.log('[SYS_MEMO]: 異常電圧検知。フェイルセーフ作動中');
+            UI.log('[SYS_MEMO]: 各種プロトコルを順不同で承認可能');
+            UI.log('[SYS_MEMO]: 通信チャネル 0x7F オープン');
+            UI.log('[SYS_MEMO]: バックアップバッテリー出力 98%');
+            UI.log('[SYS_MEMO]: 最終防衛ライン セキュリティレベル: MAX');
+
+            // 下部: ロード完了及び準備完了ログ
+            UI.log('[BOOT] セクターEX 緊急プロトコル・ロード完了。');
+            UI.log('ソケット装填完了。');
+            UI.log('セクターEX FINAL 準備完了。');
+
+            const wrapper = document.getElementById('log-wrapper');
+            if (wrapper) wrapper.scrollTop = wrapper.scrollHeight;
             
             stageState.st = [false,false,false,false,false];
             const chk = () => { if(stageState.st.every(v=>v)) { completeStage(); } };
