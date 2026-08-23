@@ -1278,11 +1278,71 @@ const STAGES = {
         init() {
             const barrier = document.getElementById('barrier');
             const rebootBtn = document.getElementById('reboot-btn');
+            const disp = document.getElementById('digital-display');
             barrier.style.display = 'block';
             barrier.classList.remove('impact');
             rebootBtn.style.display = 'flex';
             stageState.rebooting = false;
             stageState.open = false;
+
+            // ミスリード: LOCKED表示パネルの回転
+            if (disp) {
+                disp.style.cursor = 'grab';
+                stageState.dAng = 0;
+                stageState.dragDisp = false;
+                disp.onpointerdown = (e) => {
+                    e.stopPropagation();
+                    const r = disp.getBoundingClientRect();
+                    stageState.dcx = r.left + r.width / 2;
+                    stageState.dcy = r.top + r.height / 2;
+                    const p = getEventPos(e);
+                    stageState.lAng = Math.atan2(p.y - stageState.dcy, p.x - stageState.dcx);
+                    stageState.dragDisp = true;
+                    disp.style.transition = 'none';
+                };
+            }
+            stageState.onDispMove = (e) => {
+                if (!stageState.dragDisp || !disp) return;
+                const p = getEventPos(e);
+                const a = Math.atan2(p.y - stageState.dcy, p.x - stageState.dcx);
+                let da = a - stageState.lAng;
+                while (da > Math.PI) da -= 2 * Math.PI;
+                while (da < -Math.PI) da += 2 * Math.PI;
+                stageState.dAng += da * 180 / Math.PI;
+                stageState.lAng = a;
+                disp.style.transform = `rotate(${stageState.dAng}deg)`;
+            };
+            stageState.onDispUp = () => {
+                stageState.dragDisp = false;
+            };
+            document.addEventListener('pointermove', stageState.onDispMove);
+            document.addEventListener('pointerup', stageState.onDispUp);
+
+            // ミスリード: ボタン全体（フレーム）の回転
+            stageState.rot = 0;
+            stageState.dragF = false;
+            frame.style.cursor = 'grab';
+            stageState.downF = (e) => {
+                if (e.target.closest('#the-button') || e.target.closest('#reboot-btn')) return;
+                stageState.sx = getEventPos(e).x;
+                stageState.dragF = true;
+                frame.style.transition = 'none';
+            };
+            stageState.moveF = (e) => {
+                if (!stageState.dragF) return;
+                const dx = getEventPos(e).x - stageState.sx;
+                let ang = stageState.rot + dx * 0.6;
+                frame.style.transform = `rotateY(${ang}deg)`;
+                stageState.curRot = ang;
+            };
+            stageState.upF = () => {
+                if (!stageState.dragF) return;
+                stageState.dragF = false;
+                stageState.rot = stageState.curRot || stageState.rot;
+            };
+            frame.addEventListener('pointerdown', stageState.downF);
+            document.addEventListener('pointermove', stageState.moveF);
+            document.addEventListener('pointerup', stageState.upF);
 
             // バリアクリック時の弾かれる演出（キンッ音＋衝撃明滅）
             barrier.onpointerdown = (e) => {
@@ -1367,6 +1427,20 @@ const STAGES = {
                 overlay.style.opacity = '0';
                 overlay.style.transition = '';
             }
+            const disp = document.getElementById('digital-display');
+            if (disp) {
+                disp.onpointerdown = null;
+                disp.style.transform = '';
+                disp.style.cursor = 'default';
+            }
+            frame.removeEventListener('pointerdown', stageState.downF);
+            document.removeEventListener('pointermove', stageState.moveF);
+            document.removeEventListener('pointerup', stageState.upF);
+            document.removeEventListener('pointermove', stageState.onDispMove);
+            document.removeEventListener('pointerup', stageState.onDispUp);
+            frame.style.transform = '';
+            frame.style.cursor = '';
+            frame.style.transition = '';
         }
     },
     // 09: HISTORY
