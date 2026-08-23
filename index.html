@@ -1491,8 +1491,9 @@ const STAGES = {
             frame.style.transform = 'translate(0px, 0px)';
             frame.style.transition = '';
 
-            // フレーム全体の上下左右4方向のみスライド処理（斜め移動なし）
+            // フレーム全体の上下左右4方向のみスライド処理（ボタンではなくフレーム部分をドラッグ）
             stageState.downFrame = (e) => {
+                if (e.target.closest('#the-button')) return;
                 const p = getEventPos(e);
                 stageState.fStartX = p.x;
                 stageState.fStartY = p.y;
