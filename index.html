@@ -834,7 +834,6 @@ const STAGES = {
                         stageState.sum += stageState.val;
                         stageState.srcSpan.classList.add('used');
                         AudioSys.sfx.thud();
-                        UI.log(`ロード完了: +${stageState.val} (合計: ${stageState.sum})`);
 
                         if (stageState.sum === 10) {
                             completeStage();
