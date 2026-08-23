@@ -1621,7 +1621,7 @@ const STAGES = {
             };
             document.addEventListener('pointermove', stageState.mv); document.addEventListener('pointerup', stageState.up); draw();
         },
-        down() { if(!stageState.conns.includes(null)){ UI.btn.classList.add('pressed'); AudioSys.sfx.click(); completeStage(); } else { AudioSys.sfx.buzz(); } },
+        down() { if(!stageState.conns.includes(null)){ UI.btn.classList.add('pressed'); AudioSys.sfx.click(); completeStage(); } else { AudioSys.sfx.dullClick(); } },
         up() { UI.btn.classList.remove('pressed'); },
         cleanup() { document.removeEventListener('pointermove', stageState.mv); document.removeEventListener('pointerup', stageState.up); UI.leds.forEach(l=>{l.style.cursor='';l.onpointerdown=null;}); document.querySelectorAll('.char-target').forEach(c=>c.classList.remove('socket-active')); }
     },
