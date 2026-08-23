@@ -1294,45 +1294,42 @@ const STAGES = {
                 }
             };
 
-            // REBOOTボタン押下時の暗転＆再起動演出
+            // REBOOTボタン押下時の演出（押した瞬間にバリア解除 -> 0.5秒後に暗転 -> 暗転復帰後に元通りバリア復活）
             rebootBtn.onpointerdown = (e) => {
                 e.stopPropagation();
                 if (stageState.rebooting) return;
                 stageState.rebooting = true;
                 AudioSys.sfx.click();
-                UI.log('再起動シーケンス開始...');
+                UI.log('再起動シーケンス開始（バリア解除）');
 
-                // 画面を一瞬暗転（ブラックアウト）
-                const overlay = document.getElementById('transition-overlay');
-                overlay.style.transition = 'opacity 0.1s ease';
-                overlay.style.opacity = '1';
+                // 画面が暗転する0.5秒前にバリアを消す
+                barrier.style.display = 'none';
+                stageState.open = true;
 
-                setTimeout(() => {
-                    // 暗転中にバリア解除
-                    barrier.style.display = 'none';
-                    stageState.open = true;
-                    UI.log('バリア一時解除（システム再起動中）');
+                // 0.5秒後に暗転
+                stageState.blackoutTimer = setTimeout(() => {
+                    const overlay = document.getElementById('transition-overlay');
+                    overlay.style.transition = 'opacity 0.08s ease';
+                    overlay.style.opacity = '1';
 
-                    // 暗転復帰
-                    overlay.style.opacity = '0';
+                    // 暗転中に元通りバリア復活
+                    setTimeout(() => {
+                        barrier.style.display = 'block';
+                        stageState.open = false;
 
-                    // 1.5秒後にシステム復旧してバリア復活
-                    stageState.rebootTimer = setTimeout(() => {
-                        if (currentStage === 8 && !stageTransitioning) {
-                            barrier.style.display = 'block';
-                            stageState.open = false;
-                            UI.log('システム再起動完了（バリア復旧）');
-                            stageState.rebooting = false;
-                        }
-                    }, 1500);
-                }, 300);
+                        // 明転復帰
+                        overlay.style.opacity = '0';
+                        UI.log('システム再起動完了（バリア復旧）');
+                        stageState.rebooting = false;
+                    }, 250);
+                }, 500);
             };
         },
         down() {
             if (stageState.open) {
                 UI.btn.classList.add('pressed');
                 AudioSys.sfx.click();
-                clearTimeout(stageState.rebootTimer);
+                clearTimeout(stageState.blackoutTimer);
                 completeStage();
             } else {
                 AudioSys.sfx.deflect();
@@ -1347,7 +1344,7 @@ const STAGES = {
             UI.btn.classList.remove('pressed');
         },
         cleanup() {
-            clearTimeout(stageState.rebootTimer);
+            clearTimeout(stageState.blackoutTimer);
             const rebootBtn = document.getElementById('reboot-btn');
             if (rebootBtn) rebootBtn.onpointerdown = null;
             const barrier = document.getElementById('barrier');
