@@ -105,9 +105,67 @@
         #the-button.pressed .btn-face-front { transform: translateY(6px) scale(0.98) translateZ(10px); box-shadow: inset 0px 5px 15px rgba(0,0,0,0.8), 0 3px 5px rgba(0,0,0,0.8); }
         #the-button.disabled .btn-face-front { background: radial-gradient(circle at 30% 30%, #475569, #1e293b 60%, #0f172a); border-color: #0f172a; box-shadow: inset 0px 5px 10px rgba(255,255,255,0.1), inset 0px -10px 20px rgba(0,0,0,0.8); filter: grayscale(1); }
 
-        /* 08: REBOOT BARRIER */
-        #barrier { position: absolute; top: -10px; left: -10px; width: calc(100% + 20px); height: calc(100% + 20px); border-radius: 50%; background: rgba(0, 240, 255, 0.1); border: 2px solid var(--core-cyan); box-shadow: 0 0 20px var(--core-cyan), inset 0 0 20px var(--core-cyan); z-index: 20; pointer-events: auto; display: none; }
-        #reboot-btn { position: absolute; bottom: 0; right: 0; padding: 10px 20px; background: #ef4444; color: #fff; font-weight: bold; border: 2px solid #7f1d1d; border-radius: 5px; cursor: pointer; display: none; z-index: 30; }
+        /* 08: REBOOT BARRIER & REBOOT BUTTON */
+        #barrier { 
+            position: absolute; 
+            top: -12px; 
+            left: -12px; 
+            width: calc(100% + 24px); 
+            height: calc(100% + 24px); 
+            border-radius: 50%; 
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.15) 0%, rgba(0, 240, 255, 0.05) 70%, rgba(0, 240, 255, 0.3) 100%); 
+            border: 2px solid var(--core-cyan); 
+            box-shadow: 0 0 25px var(--core-cyan), inset 0 0 25px var(--core-cyan); 
+            z-index: 25; 
+            pointer-events: auto; 
+            display: none; 
+            transition: opacity 0.15s ease, transform 0.1s ease;
+        }
+        #barrier.impact {
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(0, 240, 255, 0.4) 60%, rgba(0, 240, 255, 0.8) 100%);
+            box-shadow: 0 0 40px #fff, inset 0 0 30px #fff;
+            transform: scale(1.03);
+        }
+        #reboot-btn { 
+            position: absolute; 
+            bottom: 12px; 
+            right: 12px; 
+            display: none; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 10px 16px; 
+            background: linear-gradient(180deg, #2a0808 0%, #150303 100%); 
+            border: 2px solid #ef4444; 
+            border-radius: 8px; 
+            color: #fca5a5; 
+            font-size: 0.9rem; 
+            font-weight: bold; 
+            letter-spacing: 2px; 
+            font-family: inherit; 
+            cursor: pointer; 
+            user-select: none; 
+            touch-action: none; 
+            z-index: 50; 
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4), inset 0 1px 2px rgba(255,255,255,0.2), 0 4px 10px rgba(0,0,0,0.8); 
+            transition: all 0.15s ease; 
+        }
+        #reboot-btn:hover { 
+            background: linear-gradient(180deg, #450a0a 0%, #2a0808 100%); 
+            color: #fff; 
+            box-shadow: 0 0 22px rgba(239, 68, 68, 0.7), inset 0 1px 3px rgba(255,255,255,0.4); 
+        }
+        #reboot-btn:active { 
+            transform: translateY(2px) scale(0.97); 
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.8), inset 0 2px 4px rgba(0,0,0,0.8); 
+        }
+        #reboot-btn .reboot-icon { 
+            width: 18px; 
+            height: 18px; 
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); 
+        }
+        #reboot-btn:active .reboot-icon { 
+            transform: rotate(-180deg); 
+        }
 
         /* 10: CANVAS & SOCKET */
         #wire-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 150; }
@@ -405,7 +463,12 @@
                     </div>
                 </div>
             </div>
-            <button id="reboot-btn">REBOOT</button>
+            <button id="reboot-btn">
+                <svg class="reboot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/>
+                </svg>
+                <span>REBOOT</span>
+            </button>
             <div id="chip-container">
                 <div class="chip" data-val="5">5</div><div class="chip" data-val="4">4</div><div class="chip" data-val="3">3</div><div class="chip" data-val="2">2</div><div class="chip" data-val="1">1</div>
             </div>
@@ -490,7 +553,12 @@ const AudioSys = {
         success() { AudioSys.playOsc('sine', 1046.50, 0.1, 0.1); setTimeout(() => AudioSys.playOsc('sine', 1318.51, 0.15, 0.1), 100); setTimeout(() => AudioSys.playOsc('sine', 1567.98, 0.2, 0.1), 200); },
         glass() { AudioSys.playNoise(0.2, 0.3, 'spark'); AudioSys.playOsc('square', 2000, 0.1, 0.1); },
         wireCut() { AudioSys.playOsc('sine', 950, 0.03, 0.06); AudioSys.playNoise(0.03, 0.05, 'spark'); },
-        dullClick() { AudioSys.playOsc('triangle', 90, 0.05, 0.08); }
+        dullClick() { AudioSys.playOsc('triangle', 90, 0.05, 0.08); },
+        deflect() {
+            AudioSys.playOsc('sine', 2800, 0.08, 0.25);
+            setTimeout(() => AudioSys.playOsc('sine', 3500, 0.05, 0.15), 10);
+            AudioSys.playNoise(0.02, 0.2, 'spark');
+        }
     }
 };
 
@@ -1208,17 +1276,91 @@ const STAGES = {
     // 08: REBOOT (Barrier)
     8: {
         init() {
-            document.getElementById('barrier').style.display='block'; document.getElementById('reboot-btn').style.display='block';
-            stageState.rebooting = false; stageState.open = false;
-            document.getElementById('reboot-btn').onpointerdown = (e) => {
-                e.stopPropagation(); if(stageState.rebooting) return; stageState.rebooting = true; AudioSys.sfx.beep(); UI.log('再起動シーケンス開始...');
-                setTimeout(() => { document.getElementById('barrier').style.display='none'; stageState.open=true; UI.log('バリア解除'); }, 500);
-                setTimeout(() => { document.getElementById('barrier').style.display='block'; stageState.open=false; UI.log('システム再起動完了'); stageState.rebooting=false; }, 1000);
+            const barrier = document.getElementById('barrier');
+            const rebootBtn = document.getElementById('reboot-btn');
+            barrier.style.display = 'block';
+            barrier.classList.remove('impact');
+            rebootBtn.style.display = 'flex';
+            stageState.rebooting = false;
+            stageState.open = false;
+
+            // バリアクリック時の弾かれる演出（キンッ音＋衝撃明滅）
+            barrier.onpointerdown = (e) => {
+                e.stopPropagation();
+                if (!stageState.open) {
+                    AudioSys.sfx.deflect();
+                    barrier.classList.add('impact');
+                    setTimeout(() => barrier.classList.remove('impact'), 120);
+                }
+            };
+
+            // REBOOTボタン押下時の暗転＆再起動演出
+            rebootBtn.onpointerdown = (e) => {
+                e.stopPropagation();
+                if (stageState.rebooting) return;
+                stageState.rebooting = true;
+                AudioSys.sfx.click();
+                UI.log('再起動シーケンス開始...');
+
+                // 画面を一瞬暗転（ブラックアウト）
+                const overlay = document.getElementById('transition-overlay');
+                overlay.style.transition = 'opacity 0.1s ease';
+                overlay.style.opacity = '1';
+
+                setTimeout(() => {
+                    // 暗転中にバリア解除
+                    barrier.style.display = 'none';
+                    stageState.open = true;
+                    UI.log('バリア一時解除（システム再起動中）');
+
+                    // 暗転復帰
+                    overlay.style.opacity = '0';
+
+                    // 1.5秒後にシステム復旧してバリア復活
+                    stageState.rebootTimer = setTimeout(() => {
+                        if (currentStage === 8 && !stageTransitioning) {
+                            barrier.style.display = 'block';
+                            stageState.open = false;
+                            UI.log('システム再起動完了（バリア復旧）');
+                            stageState.rebooting = false;
+                        }
+                    }, 1500);
+                }, 300);
             };
         },
-        down() { if(stageState.open) { UI.btn.classList.add('pressed'); AudioSys.sfx.click(); completeStage(); } else { AudioSys.sfx.buzz(); } },
-        up() { UI.btn.classList.remove('pressed'); },
-        cleanup() { document.getElementById('reboot-btn').onpointerdown=null; }
+        down() {
+            if (stageState.open) {
+                UI.btn.classList.add('pressed');
+                AudioSys.sfx.click();
+                clearTimeout(stageState.rebootTimer);
+                completeStage();
+            } else {
+                AudioSys.sfx.deflect();
+                const barrier = document.getElementById('barrier');
+                if (barrier) {
+                    barrier.classList.add('impact');
+                    setTimeout(() => barrier.classList.remove('impact'), 120);
+                }
+            }
+        },
+        up() {
+            UI.btn.classList.remove('pressed');
+        },
+        cleanup() {
+            clearTimeout(stageState.rebootTimer);
+            const rebootBtn = document.getElementById('reboot-btn');
+            if (rebootBtn) rebootBtn.onpointerdown = null;
+            const barrier = document.getElementById('barrier');
+            if (barrier) {
+                barrier.onpointerdown = null;
+                barrier.classList.remove('impact');
+            }
+            const overlay = document.getElementById('transition-overlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                overlay.style.transition = '';
+            }
+        }
     },
     // 09: HISTORY
     9: {
