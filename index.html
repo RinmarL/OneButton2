@@ -520,12 +520,16 @@ function loadStage(num) {
     document.getElementById('fukidashi').style.display = 'none';
     const bsn = document.getElementById('btn-sub-num');
     if (bsn) bsn.style.display = 'none';
+
+    // 暗転中にステージ初期化を即座に実行（UIの遅延反映を防止）
+    if (STAGES[num] && STAGES[num].init) {
+        STAGES[num].init();
+    }
     
     if (num === 6) {
         UI.btn.className = 'disabled';
         document.getElementById('wires-container').style.display = 'block';
     }
-    
 
     document.getElementById('transition-overlay').style.opacity = '1';
     const intro = document.getElementById('sector-intro');
@@ -537,7 +541,6 @@ function loadStage(num) {
         document.getElementById('transition-overlay').style.opacity = '0';
         setTimeout(() => {
             UI.btn.style.pointerEvents = 'auto';
-            if(STAGES[num].init) STAGES[num].init();
         }, 800);
     }, 2000);
 }
