@@ -325,13 +325,13 @@ function loadStage(num) {
 const STAGE_NAMES = { 1:'CONTACT2', 2:'BALANCE', 3:'JUST', 4:'FLICKS', 5:'DRAG&DROP', 6:'SWIPE', 7:'CODE', 8:'REBOOT', 9:'HISTORY', 10:'RELATIONSHIP', 11:'FINAL' };
 
 const STAGES = {
-    // 01: CONTACT2 (Double Tap <= 500ms)
+    // 01: CONTACT2 (Double Tap <= 250ms)
     1: {
         init() { stageState.lastTap = 0; },
         down() {
             UI.btn.classList.add('pressed'); AudioSys.sfx.click();
             const now = Date.now();
-            if (now - stageState.lastTap <= 500) { completeStage(); }
+            if (now - stageState.lastTap <= 250) { completeStage(); }
             stageState.lastTap = now;
         },
         up() { UI.btn.classList.remove('pressed'); }
@@ -339,7 +339,8 @@ const STAGES = {
     // 02: BALANCE (60-80% Keep 3.0s)
     2: {
         init() {
-            document.getElementById('pressure-bar').style.display = 'block';
+            const bar = document.getElementById('pressure-bar');
+            if (bar) bar.style.display = 'none';
             stageState.val = 0; stageState.pressing = false; stageState.hold = 0; stageState.done = false;
             let lastTime = performance.now();
             const loop = (t) => {
@@ -348,6 +349,15 @@ const STAGES = {
                 if (stageState.pressing) stageState.val += 40 * dt; else stageState.val -= 30 * dt;
                 if (stageState.val > 100) stageState.val = 100; if (stageState.val < 0) stageState.val = 0;
                 document.getElementById('pressure-fill').style.width = stageState.val + '%';
+
+                const bar = document.getElementById('pressure-bar');
+                if (bar) {
+                    if (stageState.pressing || stageState.val > 0) {
+                        bar.style.display = 'block';
+                    } else {
+                        bar.style.display = 'none';
+                    }
+                }
                 
                 if (stageState.val >= 60 && stageState.val <= 80) {
                     stageState.hold += dt;
@@ -368,7 +378,11 @@ const STAGES = {
         },
         down() { stageState.pressing = true; UI.btn.classList.add('pressed'); },
         up() { stageState.pressing = false; UI.btn.classList.remove('pressed'); },
-        cleanup() { cancelAnimationFrame(stageState.anim); }
+        cleanup() {
+            cancelAnimationFrame(stageState.anim);
+            const bar = document.getElementById('pressure-bar');
+            if (bar) bar.style.display = 'none';
+        }
     },
     // 03: JUST (Tap exactly at 3.0s)
     3: {
@@ -727,6 +741,7 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
 
