@@ -1294,42 +1294,52 @@ const STAGES = {
                 }
             };
 
-            // REBOOTボタン押下時の演出（押した瞬間にバリア解除 -> 0.5秒後に暗転 -> 暗転復帰後に元通りバリア復活）
+            // REBOOTボタン押下時の演出（1.5秒かけて暗転、残りの0.5秒でバリア解除、暗転後は元通り）
             rebootBtn.onpointerdown = (e) => {
                 e.stopPropagation();
                 if (stageState.rebooting) return;
                 stageState.rebooting = true;
                 AudioSys.sfx.click();
-                UI.log('再起動シーケンス開始（バリア解除）');
+                UI.log('再起動シーケンス開始（シャットダウン進行中...）');
 
-                // 画面が暗転する0.5秒前にバリアを消す
-                barrier.style.display = 'none';
-                stageState.open = true;
+                // 1.5秒かけて徐々に画面が暗転
+                const overlay = document.getElementById('transition-overlay');
+                overlay.style.transition = 'opacity 1.5s linear';
+                overlay.style.opacity = '1';
 
-                // 0.5秒後に暗転
+                // 1.0秒後（暗転完了の残り0.5秒）にバリアが解ける！
+                stageState.barrierDropTimer = setTimeout(() => {
+                    barrier.style.display = 'none';
+                    stageState.open = true;
+                    UI.log('バリア停止（残り0.5秒）');
+                }, 1000);
+
+                // 1.5秒後（完全暗転完了時）：元通りバリア復活＆リセット
                 stageState.blackoutTimer = setTimeout(() => {
-                    const overlay = document.getElementById('transition-overlay');
-                    overlay.style.transition = 'opacity 0.08s ease';
-                    overlay.style.opacity = '1';
+                    barrier.style.display = 'block';
+                    stageState.open = false;
 
-                    // 暗転中に元通りバリア復活
+                    // 暗転復帰（パッと明るく戻る）
                     setTimeout(() => {
-                        barrier.style.display = 'block';
-                        stageState.open = false;
-
-                        // 明転復帰
+                        overlay.style.transition = 'opacity 0.2s ease';
                         overlay.style.opacity = '0';
                         UI.log('システム再起動完了（バリア復旧）');
                         stageState.rebooting = false;
-                    }, 250);
-                }, 500);
+                    }, 200);
+                }, 1500);
             };
         },
         down() {
             if (stageState.open) {
                 UI.btn.classList.add('pressed');
                 AudioSys.sfx.click();
+                clearTimeout(stageState.barrierDropTimer);
                 clearTimeout(stageState.blackoutTimer);
+                const overlay = document.getElementById('transition-overlay');
+                if (overlay) {
+                    overlay.style.transition = '';
+                    overlay.style.opacity = '0';
+                }
                 completeStage();
             } else {
                 AudioSys.sfx.deflect();
@@ -1344,6 +1354,7 @@ const STAGES = {
             UI.btn.classList.remove('pressed');
         },
         cleanup() {
+            clearTimeout(stageState.barrierDropTimer);
             clearTimeout(stageState.blackoutTimer);
             const rebootBtn = document.getElementById('reboot-btn');
             if (rebootBtn) rebootBtn.onpointerdown = null;
