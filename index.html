@@ -834,14 +834,6 @@ const STAGES = {
                         stageState.sum += stageState.val;
                         stageState.srcSpan.classList.add('used');
                         AudioSys.sfx.thud();
-
-                        if (stageState.sum === 10) {
-                            completeStage();
-                        } else if (stageState.sum > 10) {
-                            AudioSys.sfx.buzz();
-                            UI.log('エラー: オーバーフロー発生 (リセット)');
-                            setTimeout(() => { if (currentStage === 5) STAGES[5].init(); }, 600);
-                        }
                     }
 
                     stageState.dragEl.remove();
@@ -852,6 +844,22 @@ const STAGES = {
 
             document.addEventListener('pointermove', stageState.onmove);
             document.addEventListener('pointerup', stageState.onup);
+        },
+        down() {
+            UI.btn.classList.add('pressed');
+            AudioSys.sfx.click();
+
+            // 答え合わせ判定
+            if (stageState.sum === 10) {
+                completeStage();
+            } else {
+                AudioSys.sfx.buzz();
+                UI.log('エラー: 不正な値です (リセット)');
+                setTimeout(() => { if (currentStage === 5) STAGES[5].init(); }, 600);
+            }
+        },
+        up() {
+            UI.btn.classList.remove('pressed');
         },
         cleanup() {
             const bsn = document.getElementById('btn-sub-num');
