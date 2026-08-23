@@ -172,9 +172,42 @@
         #center-socket { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: #222; border: 2px solid #555; display: none; }
 
         /* EX: HUD, DIP, FUKIDASHI */
-        #skill-hud { position: absolute; top: -80px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); display: none; pointer-events: none; }
-        .skill-safe-zone { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(from 210deg, rgba(255,255,255,0.8) 0deg, rgba(255,255,255,0.8) 30deg, transparent 30deg); }
-        #skill-needle { position: absolute; top: 50%; left: 50%; width: 2px; height: 50%; background: #ef4444; transform-origin: top center; transform: rotate(180deg); }
+        #skill-hud { 
+            position: absolute; 
+            top: -125px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 50%; 
+            border: 2px solid var(--core-cyan); 
+            background: rgba(10, 15, 25, 0.85); 
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4), inset 0 0 10px rgba(0, 240, 255, 0.2); 
+            display: none; 
+            pointer-events: none; 
+            z-index: 120; 
+        }
+        .skill-safe-zone { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            border-radius: 50%; 
+            background: conic-gradient(from 210deg, rgba(34, 197, 94, 0.7) 0deg, rgba(34, 197, 94, 0.7) 30deg, transparent 30deg); 
+        }
+        #skill-needle { 
+            position: absolute; 
+            bottom: 50%; 
+            left: calc(50% - 1.5px); 
+            width: 3px; 
+            height: 48%; 
+            background: #ef4444; 
+            border-radius: 2px 2px 0 0; 
+            box-shadow: 0 0 8px #ef4444; 
+            transform-origin: bottom center; 
+            transform: rotate(0deg); 
+        }
         #fukidashi { position: absolute; top: 40px; right: 10px; background: #fff; color: #000; padding: 8px 12px; border-radius: 10px; font-weight: bold; cursor: pointer; user-select: none; z-index: 300; display: none; border: 2px solid #ccc; }
         #fukidashi.cracked { color: #ef4444; border-color: #ef4444; transform: scale(0.9); }
         #dip-switches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; background: #000; border: 2px solid #333; border-radius: 5px; }
@@ -1836,33 +1869,48 @@ const STAGES = {
         },
         down() {
             UI.btn.classList.add('pressed'); AudioSys.sfx.click();
+            stageState.isBtnDown = true;
             const n = Date.now(); stageState.taps.push(n); stageState.taps = stageState.taps.filter(t => n-t <= 1000);
             if(stageState.taps.length>=3 && !stageState.st[0]) { stageState.st[0]=true; UI.setLED(0, 'green'); AudioSys.sfx.thud(); }
             
             if(!stageState.st[1]) {
-                document.getElementById('skill-hud').style.display = 'block';
-                stageState.hStart = performance.now(); stageState.hActive = true;
-                const loop = (t) => {
-                    if(!stageState.hActive || stageState.st[1]) return;
-                    const el = (t - stageState.hStart) / 1000;
-                    const deg = (el * 180) % 360;
-                    document.getElementById('skill-needle').style.transform = `rotate(${deg}deg)`;
-                    stageState.curDeg = deg;
-                    stageState.hAnim = requestAnimationFrame(loop);
-                };
-                stageState.hAnim = requestAnimationFrame(loop);
+                // ボタン長押し2秒後からスキルチェックHUDを表示して針が回転開始！
+                stageState.holdTimerEX = setTimeout(() => {
+                    if(stageState.isBtnDown && !stageState.st[1]) {
+                        document.getElementById('skill-hud').style.display = 'block';
+                        AudioSys.sfx.beep();
+                        stageState.hStart = performance.now(); stageState.hActive = true;
+                        const loop = (t) => {
+                            if(!stageState.hActive || stageState.st[1]) return;
+                            const el = (t - stageState.hStart) / 1000;
+                            // 現在の速度: 1秒間に180度（2秒で1周）
+                            const deg = (el * 180) % 360;
+                            document.getElementById('skill-needle').style.transform = `rotate(${deg}deg)`;
+                            stageState.curDeg = deg;
+                            stageState.hAnim = requestAnimationFrame(loop);
+                        };
+                        stageState.hAnim = requestAnimationFrame(loop);
+                    }
+                }, 2000);
             }
         },
         up() {
-            UI.btn.classList.remove('pressed'); stageState.hActive = false; cancelAnimationFrame(stageState.hAnim);
-            document.getElementById('skill-hud').style.display = 'none';
-            if(!stageState.st[1] && stageState.curDeg !== undefined) {
-                if(stageState.curDeg >= 210 && stageState.curDeg <= 240) { stageState.st[1]=true; UI.setLED(1, 'green'); AudioSys.sfx.thud(); }
-                else { AudioSys.sfx.buzz(); }
-                stageState.curDeg = undefined; document.getElementById('skill-needle').style.transform='rotate(180deg)';
+            UI.btn.classList.remove('pressed');
+            stageState.isBtnDown = false;
+            clearTimeout(stageState.holdTimerEX);
+            if(stageState.hActive) {
+                stageState.hActive = false;
+                cancelAnimationFrame(stageState.hAnim);
+                document.getElementById('skill-hud').style.display = 'none';
+                if(!stageState.st[1] && stageState.curDeg !== undefined) {
+                    if(stageState.curDeg >= 210 && stageState.curDeg <= 240) { stageState.st[1]=true; UI.setLED(1, 'green'); AudioSys.sfx.thud(); }
+                    else { AudioSys.sfx.buzz(); }
+                    stageState.curDeg = undefined; document.getElementById('skill-needle').style.transform='rotate(0deg)';
+                }
             }
         },
         cleanup() {
+            clearTimeout(stageState.holdTimerEX);
             cancelAnimationFrame(stageState.hAnim);
             document.getElementById('skill-hud').style.display = 'none';
             document.removeEventListener('pointerup', stageState.upD);
