@@ -1793,8 +1793,8 @@ const STAGES = {
                 };
             });
             
-            // LED 2: Hold 2s, HUD release 210-240
-            document.getElementById('skill-hud').style.display='block';
+            // LED 2: Hold 2s, HUD release 210-240 (初期状態は非表示)
+            document.getElementById('skill-hud').style.display = 'none';
             
             // LED 3: Fukidashi
             const l3 = UI.leds[2]; l3.style.cursor='pointer';
@@ -1840,6 +1840,7 @@ const STAGES = {
             if(stageState.taps.length>=3 && !stageState.st[0]) { stageState.st[0]=true; UI.setLED(0, 'green'); AudioSys.sfx.thud(); }
             
             if(!stageState.st[1]) {
+                document.getElementById('skill-hud').style.display = 'block';
                 stageState.hStart = performance.now(); stageState.hActive = true;
                 const loop = (t) => {
                     if(!stageState.hActive || stageState.st[1]) return;
@@ -1854,14 +1855,16 @@ const STAGES = {
         },
         up() {
             UI.btn.classList.remove('pressed'); stageState.hActive = false; cancelAnimationFrame(stageState.hAnim);
+            document.getElementById('skill-hud').style.display = 'none';
             if(!stageState.st[1] && stageState.curDeg !== undefined) {
-                if(stageState.curDeg >= 210 && stageState.curDeg <= 240) { stageState.st[1]=true; UI.setLED(1, 'green'); AudioSys.sfx.thud(); document.getElementById('skill-hud').style.display='none'; }
+                if(stageState.curDeg >= 210 && stageState.curDeg <= 240) { stageState.st[1]=true; UI.setLED(1, 'green'); AudioSys.sfx.thud(); }
                 else { AudioSys.sfx.buzz(); }
                 stageState.curDeg = undefined; document.getElementById('skill-needle').style.transform='rotate(180deg)';
             }
         },
         cleanup() {
             cancelAnimationFrame(stageState.hAnim);
+            document.getElementById('skill-hud').style.display = 'none';
             document.removeEventListener('pointerup', stageState.upD);
             document.removeEventListener('pointermove', stageState.moveD);
             frame.removeEventListener('pointerdown', stageState.downF);
