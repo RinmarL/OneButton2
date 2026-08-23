@@ -702,7 +702,7 @@ function loadStage(num) {
     stageTransitioning = false; stageState = {};
     UI.clearLog();
     UI.leds.forEach(l => { if(l){ l.style.cursor='default'; l.onpointerdown=null; l.style.backgroundColor=''; l.style.boxShadow=''; } });
-    const sName = num === 11 ? "FINAL" : STAGE_NAMES[num]; UI.sectorDisp.innerHTML = num === 11 ? `SECT<span id="char-o1" class="char-target">O</span>R EX FINAL` : `SECT<span id="char-o1" class="char-target">O</span>R ${num.toString().padStart(2, '0')} ${sName}`;
+    const sName = num === 11 ? "FINAL-B-" : STAGE_NAMES[num]; UI.sectorDisp.innerHTML = num === 11 ? `SECT<span id="char-o1" class="char-target">O</span>R EX FINAL-B-` : `SECT<span id="char-o1" class="char-target">O</span>R ${num.toString().padStart(2, '0')} ${sName}`;
     UI.log(num === 11 ? `セクター EX をロード中...` : `セクター ${num} をロード中...`);
     const l4 = document.getElementById('led-4'); const l5 = document.getElementById('led-5');
     if (num === 11) { if(l4) l4.style.display='block'; if(l5) l5.style.display='block'; }
@@ -745,7 +745,7 @@ function loadStage(num) {
     document.getElementById('transition-overlay').style.opacity = '1';
     const intro = document.getElementById('sector-intro');
     if (intro) {
-        intro.textContent = num === 11 ? `SECTOR EX : FINAL` : `SECTOR ${num.toString().padStart(2, '0')} : ${STAGE_NAMES[num]}`;
+        intro.textContent = num === 11 ? `SECTOR EX : FINAL-B-` : `SECTOR ${num.toString().padStart(2, '0')} : ${STAGE_NAMES[num]}`;
         intro.classList.remove('intro-anim'); void intro.offsetWidth; intro.classList.add('intro-anim');
     }
     setTimeout(() => {
@@ -756,7 +756,7 @@ function loadStage(num) {
     }, 2000);
 }
 
-const STAGE_NAMES = { 1:'CONTACT2', 2:'BALANCE', 3:'JUST', 4:'FLICKS', 5:'DRAG&DROP', 6:'SWIPE', 7:'CODE', 8:'REBOOT', 9:'HISTORY', 10:'RELATIONSHIP', 11:'FINAL' };
+const STAGE_NAMES = { 1:'CONTACT2', 2:'BALANCE', 3:'JUST', 4:'FLICKS', 5:'DRAG&DROP', 6:'SWIPE', 7:'CODE', 8:'REBOOT', 9:'HISTORY', 10:'RELATIONSHIP', 11:'FINAL-B-' };
 
 const STAGES = {
     // 01: CONTACT2 (Double Tap <= 250ms)
@@ -1807,7 +1807,7 @@ const STAGES = {
             // 下部: ロード完了及び準備完了ログ
             UI.log('[BOOT] セクターEX 緊急プロトコル・ロード完了。');
             UI.log('ソケット装填完了。');
-            UI.log('セクターEX FINAL 準備完了。');
+            UI.log('セクターEX FINAL-B- 準備完了。');
 
             const wrapper = document.getElementById('log-wrapper');
             if (wrapper) wrapper.scrollTop = wrapper.scrollHeight;
