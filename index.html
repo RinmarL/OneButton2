@@ -420,6 +420,7 @@
 <body>
     <div class="scanlines"></div><div class="vignette"></div>
     <div id="game-container">
+        <canvas id="wire-canvas"></canvas>
         <div id="header">
             <div class="sector-info" id="sector-display">SECT<span id="char-o1" class="char-target">O</span>R 01/10</div>
             <div class="status-leds">
@@ -428,7 +429,6 @@
             </div>
         </div>
         <div id="button-area">
-            <canvas id="wire-canvas"></canvas>
             <div id="timer-display" style="text-align: center; font-size: 2.2rem; color: var(--core-cyan); font-family: 'Courier New', monospace; font-weight: bold; margin-bottom: 5px; opacity: 0; text-shadow: 0 0 10px var(--core-cyan); letter-spacing: 3px;">3.00</div>
             <div id="digital-display" class="locked">
                 <div class="display-front" id="display-front-text">L<span id="char-o2" class="char-target">O</span>CKED</div>
@@ -1581,49 +1581,135 @@ const STAGES = {
     // 10: RELATIONSHIP
     10: {
         init() {
-            UI.btn.classList.add('disabled'); document.getElementById('wire-canvas').style.display='block'; document.getElementById('center-socket').style.display='block';
-            const cvs = document.getElementById('wire-canvas'); cvs.width = window.innerWidth; cvs.height = window.innerHeight; const ctx = cvs.getContext('2d');
+            UI.log('電力不足。');
+            UI.btn.classList.add('disabled');
+            const cvs = document.getElementById('wire-canvas');
+            const cont = document.getElementById('game-container');
+            const socket = document.getElementById('center-socket');
+            cvs.style.display = 'block';
+            socket.style.display = 'block';
+
+            // Canvas解像度をコンテナ実寸に合わせる
+            cvs.width = cont.clientWidth;
+            cvs.height = cont.clientHeight;
+            const ctx = cvs.getContext('2d');
+
             const leds = [document.getElementById('led-1'), document.getElementById('led-2'), document.getElementById('led-3')];
-            const socks = [document.getElementById('center-socket'), document.getElementById('char-o1'), document.getElementById('char-o2')];
-            stageState.conns = [null, null, null]; stageState.dragL = -1;
-            
+            const socks = [socket, document.getElementById('char-o1'), document.getElementById('char-o2')];
+            stageState.conns = [null, null, null];
+            stageState.dragL = -1;
+
+            // 右上ランプは最初からオレンジ色に点灯
+            UI.setLED(0, 'orange');
+            UI.setLED(1, 'orange');
+            UI.setLED(2, 'orange');
+
             const draw = () => {
-                ctx.clearRect(0,0,cvs.width,cvs.height); ctx.lineWidth=4; ctx.strokeStyle='#f97316';
-                for(let i=0; i<3; i++) {
-                    const lRect = leds[i].getBoundingClientRect(); const lx = lRect.left+lRect.width/2; const ly = lRect.top+lRect.height/2;
-                    if(stageState.conns[i] !== null) {
+                const cRect = cont.getBoundingClientRect();
+                ctx.clearRect(0, 0, cvs.width, cvs.height);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#f97316';
+                ctx.lineCap = 'round';
+
+                for (let i = 0; i < 3; i++) {
+                    const lRect = leds[i].getBoundingClientRect();
+                    const lx = lRect.left + lRect.width / 2 - cRect.left;
+                    const ly = lRect.top + lRect.height / 2 - cRect.top;
+
+                    if (stageState.conns[i] !== null) {
                         const sRect = socks[stageState.conns[i]].getBoundingClientRect();
-                        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(sRect.left+sRect.width/2, sRect.top+sRect.height/2); ctx.stroke();
-                    } else if(stageState.dragL === i && stageState.mx) {
-                        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(stageState.mx, stageState.my); ctx.stroke();
+                        const sx = sRect.left + sRect.width / 2 - cRect.left;
+                        const sy = sRect.top + sRect.height / 2 - cRect.top;
+                        ctx.beginPath();
+                        ctx.moveTo(lx, ly);
+                        ctx.lineTo(sx, sy);
+                        ctx.stroke();
+                    } else if (stageState.dragL === i && stageState.mx !== undefined) {
+                        const mx = stageState.mx - cRect.left;
+                        const my = stageState.my - cRect.top;
+                        ctx.beginPath();
+                        ctx.moveTo(lx, ly);
+                        ctx.lineTo(mx, my);
+                        ctx.stroke();
                     }
                 }
             };
-            
+
             leds.forEach((l, i) => {
-                l.style.cursor='grab';
-                l.onpointerdown = (e) => { e.stopPropagation(); stageState.dragL = i; stageState.mx=e.clientX; stageState.my=e.clientY; AudioSys.sfx.click(); };
+                l.style.cursor = 'grab';
+                l.onpointerdown = (e) => {
+                    e.stopPropagation();
+                    stageState.dragL = i;
+                    stageState.mx = e.clientX;
+                    stageState.my = e.clientY;
+                    AudioSys.sfx.click();
+                    draw();
+                };
             });
-            stageState.mv = (e) => { if(stageState.dragL>=0){ stageState.mx=e.clientX; stageState.my=e.clientY; draw(); } };
+
+            stageState.mv = (e) => {
+                if (stageState.dragL >= 0) {
+                    stageState.mx = e.clientX;
+                    stageState.my = e.clientY;
+                    draw();
+                }
+            };
+
             stageState.up = (e) => {
-                if(stageState.dragL>=0) {
+                if (stageState.dragL >= 0) {
                     let hit = -1;
                     socks.forEach((s, si) => {
                         const r = s.getBoundingClientRect();
-                        if(e.clientX>r.left-20 && e.clientX<r.right+20 && e.clientY>r.top-20 && e.clientY<r.bottom+20) hit = si;
+                        if (e.clientX > r.left - 20 && e.clientX < r.right + 20 && e.clientY > r.top - 20 && e.clientY < r.bottom + 20) {
+                            hit = si;
+                        }
                     });
-                    if(hit>=0 && !stageState.conns.includes(hit)) {
-                        stageState.conns[stageState.dragL] = hit; AudioSys.sfx.thud(); socks[hit].classList.add('socket-active'); UI.setLED(stageState.dragL, 'orange');
-                        if(!stageState.conns.includes(null)) { UI.btn.classList.remove('disabled'); UI.log('全ソケット接続完了'); AudioSys.sfx.buzz(); }
+                    if (hit >= 0 && !stageState.conns.includes(hit)) {
+                        stageState.conns[stageState.dragL] = hit;
+                        AudioSys.sfx.thud();
+                        socks[hit].classList.add('socket-active');
+                        if (!stageState.conns.includes(null)) {
+                            UI.btn.classList.remove('disabled');
+                            UI.log('全ソケット接続完了');
+                        }
                     }
-                    stageState.dragL = -1; draw();
+                    stageState.dragL = -1;
+                    draw();
                 }
             };
-            document.addEventListener('pointermove', stageState.mv); document.addEventListener('pointerup', stageState.up); draw();
+
+            document.addEventListener('pointermove', stageState.mv);
+            document.addEventListener('pointerup', stageState.up);
+            draw();
         },
-        down() { if(!stageState.conns.includes(null)){ UI.btn.classList.add('pressed'); AudioSys.sfx.click(); completeStage(); } else { AudioSys.sfx.dullClick(); } },
-        up() { UI.btn.classList.remove('pressed'); },
-        cleanup() { document.removeEventListener('pointermove', stageState.mv); document.removeEventListener('pointerup', stageState.up); UI.leds.forEach(l=>{l.style.cursor='';l.onpointerdown=null;}); document.querySelectorAll('.char-target').forEach(c=>c.classList.remove('socket-active')); }
+        down() {
+            if (!stageState.conns.includes(null)) {
+                UI.btn.classList.add('pressed');
+                AudioSys.sfx.click();
+                completeStage();
+            } else {
+                AudioSys.sfx.dullClick();
+            }
+        },
+        up() {
+            UI.btn.classList.remove('pressed');
+        },
+        cleanup() {
+            document.removeEventListener('pointermove', stageState.mv);
+            document.removeEventListener('pointerup', stageState.up);
+            const cvs = document.getElementById('wire-canvas');
+            if (cvs) {
+                const ctx = cvs.getContext('2d');
+                ctx.clearRect(0, 0, cvs.width, cvs.height);
+                cvs.style.display = 'none';
+            }
+            document.getElementById('center-socket').style.display = 'none';
+            UI.leds.forEach(l => {
+                l.style.cursor = '';
+                l.onpointerdown = null;
+            });
+            document.querySelectorAll('.char-target').forEach(c => c.classList.remove('socket-active'));
+        }
     },
     // 11: FINAL (EX)
     11: {
