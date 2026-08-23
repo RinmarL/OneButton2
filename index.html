@@ -644,10 +644,11 @@ const STAGES = {
             if(td) { td.style.opacity = '0'; }
         }
     },
-    // 04: FLICKS (一筆書き連続軌道＆LOCKED突き刺さり＆リワインド復帰)
+    // 04: FLICKS (双方向レールスライド＆LOCKED左右対称突き刺さり＆リワインド復帰)
     4: {
         init() { 
-            stageState.idx = 0; 
+            stageState.segIdx = 0; 
+            stageState.segDist = 0;
             stageState.dragging = false; 
             stageState.rewinding = false;
             stageState.curPos = [0, 0];
@@ -658,10 +659,11 @@ const STAGES = {
         down(e) {
             if (stageState.rewinding) return;
             UI.btn.classList.add('pressed');
-            stageState.startX = getEventPos(e).x; 
-            stageState.startY = getEventPos(e).y;
+            stageState.lastX = getEventPos(e).x; 
+            stageState.lastY = getEventPos(e).y;
             stageState.dragging = true;
-            stageState.idx = 0;
+            stageState.segIdx = 0;
+            stageState.segDist = 0;
             stageState.curPos = [0, 0];
             UI.btnFrame.style.transition = '';
         },
@@ -670,26 +672,26 @@ const STAGES = {
             if (!stageState.dragging || stageState.rewinding) return;
             stageState.dragging = false;
 
-            // 途中で手を離した場合は、通ってきたポイントを逆順に辿って初期位置へ戻る
-            stageState.rewinding = true;
-            const checkpoints = [
-                [0, 0],       // P0 (中央)
-                [0, -55],     // P1 (上)
-                [60, -55],    // P2 (右上)
-                [60, 55],     // P3 (右下)
-                [-60, 55],    // P4 (左下)
-                [0, -90]      // P5 (LOCKED突き刺さり)
+            const segs = [
+                { start: [0, 0], end: [0, -60], len: 60, dir: [0, -1] },
+                { start: [0, -60], end: [60, -60], len: 60, dir: [1, 0] },
+                { start: [60, -60], end: [60, 60], len: 120, dir: [0, 1] },
+                { start: [60, 60], end: [0, 60], len: 60, dir: [-1, 0] },
+                { start: [0, 60], end: [0, -90], len: 150, dir: [0, -1] }
             ];
 
+            // 途中で手を離した場合は、通ってきたポイントを逆順に辿って初期位置へ戻る
+            stageState.rewinding = true;
             const rewindPath = [];
             rewindPath.push(stageState.curPos);
-            for (let i = stageState.idx; i >= 0; i--) {
-                rewindPath.push(checkpoints[i]);
+            for (let i = stageState.segIdx; i >= 0; i--) {
+                rewindPath.push(segs[i].start);
             }
 
             const stepRewind = () => {
                 if (rewindPath.length === 0) {
-                    stageState.idx = 0;
+                    stageState.segIdx = 0;
+                    stageState.segDist = 0;
                     stageState.curPos = [0, 0];
                     stageState.rewinding = false;
                     UI.btnFrame.style.transition = '';
@@ -706,61 +708,50 @@ const STAGES = {
         winMove(e) {
             if (!stageState.dragging || stageState.rewinding) return;
             const p = getEventPos(e); 
-            const rawDx = p.x - stageState.startX; 
-            const rawDy = p.y - stageState.startY;
+            const dx = p.x - stageState.lastX; 
+            const dy = p.y - stageState.lastY;
+            stageState.lastX = p.x;
+            stageState.lastY = p.y;
 
-            let curX = 0;
-            let curY = 0;
+            const segs = [
+                { start: [0, 0], end: [0, -60], len: 60, dir: [0, -1] },
+                { start: [0, -60], end: [60, -60], len: 60, dir: [1, 0] },
+                { start: [60, -60], end: [60, 60], len: 120, dir: [0, 1] },
+                { start: [60, 60], end: [0, 60], len: 60, dir: [-1, 0] },
+                { start: [0, 60], end: [0, -90], len: 150, dir: [0, -1] }
+            ];
 
-            if (stageState.idx === 0) {
-                // Step 0: [0, 0] -> [0, -55] (上へ)
-                curX = 0;
-                curY = Math.min(0, Math.max(-55, rawDy));
-                if (curY <= -50) {
-                    stageState.idx = 1;
-                    stageState.startX = p.x;
-                    stageState.startY = p.y;
-                }
-            } else if (stageState.idx === 1) {
-                // Step 1: [0, -55] -> [60, -55] (右へ)
-                curY = -55;
-                curX = Math.max(0, Math.min(60, rawDx));
-                if (curX >= 55) {
-                    stageState.idx = 2;
-                    stageState.startX = p.x;
-                    stageState.startY = p.y;
-                }
-            } else if (stageState.idx === 2) {
-                // Step 2: [60, -55] -> [60, 55] (下へ)
-                curX = 60;
-                curY = Math.min(55, Math.max(-55, -55 + rawDy));
-                if (curY >= 50) {
-                    stageState.idx = 3;
-                    stageState.startX = p.x;
-                    stageState.startY = p.y;
-                }
-            } else if (stageState.idx === 3) {
-                // Step 3: [60, 55] -> [-60, 55] (左へ)
-                curY = 55;
-                curX = Math.max(-60, Math.min(60, 60 + rawDx));
-                if (curX <= -55) {
-                    stageState.idx = 4;
-                    stageState.startX = p.x;
-                    stageState.startY = p.y;
-                }
-            } else if (stageState.idx === 4) {
-                // Step 4: [-60, 55] -> [0, -90] (中央上へ駆け上がりLOCKEDに突き刺さる！)
-                const progress = Math.min(1, Math.max(0, -rawDy / 145));
-                curX = -60 + 60 * progress;
-                curY = 55 - 145 * progress;
-                if (curY <= -85) {
-                    stageState.idx = 5;
+            const currentSeg = segs[stageState.segIdx];
+            const delta = dx * currentSeg.dir[0] + dy * currentSeg.dir[1];
+            stageState.segDist += delta;
+
+            // 前に進んで次の区間へ
+            while (stageState.segIdx < segs.length && stageState.segDist > segs[stageState.segIdx].len) {
+                stageState.segDist -= segs[stageState.segIdx].len;
+                stageState.segIdx++;
+                if (stageState.segIdx >= segs.length) {
                     stageState.dragging = false;
                     UI.btnFrame.style.transform = `translate(0px, -90px)`;
                     setTimeout(() => completeStage(), 150);
                     return;
                 }
             }
+
+            // 後ろに戻って前の区間へ
+            while (stageState.segDist < 0) {
+                if (stageState.segIdx > 0) {
+                    stageState.segIdx--;
+                    stageState.segDist += segs[stageState.segIdx].len;
+                } else {
+                    stageState.segDist = 0;
+                    break;
+                }
+            }
+
+            const actSeg = segs[stageState.segIdx];
+            const t = Math.max(0, Math.min(1, stageState.segDist / actSeg.len));
+            const curX = actSeg.start[0] + (actSeg.end[0] - actSeg.start[0]) * t;
+            const curY = actSeg.start[1] + (actSeg.end[1] - actSeg.start[1]) * t;
 
             stageState.curPos = [curX, curY];
             UI.btnFrame.style.transform = `translate(${curX}px, ${curY}px)`;
