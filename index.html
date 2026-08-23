@@ -887,6 +887,9 @@ const STAGES = {
             stageState.power = false; 
             stageState.rot = 0; 
             stageState.dragF = false;
+            stageState.isSlicing = false;
+            stageState.strokeDist = 0;
+            stageState.lastSlicePos = null;
 
             document.querySelectorAll('.cut-wire').forEach(w => {
                 w.classList.remove('cut');
@@ -894,7 +897,7 @@ const STAGES = {
                 w.onpointerenter = null;
             });
 
-            // ドラッグ・スワイプでなぞった時のみ切断する判定
+            // ワイヤー切断判定
             const checkWireSlice = (cx, cy) => {
                 document.querySelectorAll('.cut-wire').forEach(w => {
                     if (!w.classList.contains('cut')) {
@@ -912,11 +915,45 @@ const STAGES = {
                 });
             };
 
-            stageState.onSliceMove = (e) => {
+            stageState.onSliceDown = (e) => {
                 const p = getEventPos(e);
-                checkWireSlice(p.x, p.y);
+                stageState.isSlicing = true;
+                stageState.strokeDist = 0;
+                stageState.lastSlicePos = { x: p.x, y: p.y };
             };
+
+            stageState.onSliceMove = (e) => {
+                // PCマウス: 左クリック(buttons === 1)押下中であること
+                // スマホ: タッチドラッグ(isSlicing === true)であること
+                const isMouseDown = (e.pointerType === 'mouse' && e.buttons === 1);
+                const isTouchMove = (e.pointerType !== 'mouse' && stageState.isSlicing);
+                
+                if (!isMouseDown && !isTouchMove) return;
+
+                const p = getEventPos(e);
+                if (stageState.lastSlicePos) {
+                    const d = Math.hypot(p.x - stageState.lastSlicePos.x, p.y - stageState.lastSlicePos.y);
+                    stageState.strokeDist += d;
+                    stageState.lastSlicePos = { x: p.x, y: p.y };
+                } else {
+                    stageState.lastSlicePos = { x: p.x, y: p.y };
+                }
+
+                // スワイプ/ドラッグの移動距離が25px以上ある場合のみスライス（ちょん押し防止）
+                if (stageState.strokeDist >= 25) {
+                    checkWireSlice(p.x, p.y);
+                }
+            };
+
+            stageState.onSliceUp = () => {
+                stageState.isSlicing = false;
+                stageState.strokeDist = 0;
+                stageState.lastSlicePos = null;
+            };
+
+            document.addEventListener('pointerdown', stageState.onSliceDown);
             document.addEventListener('pointermove', stageState.onSliceMove);
+            document.addEventListener('pointerup', stageState.onSliceUp);
 
             const bSw = document.getElementById('back-switch');
             bSw.onpointerdown = (e) => { 
@@ -967,7 +1004,9 @@ const STAGES = {
             frame.removeEventListener('pointerdown', stageState.downF); 
             document.removeEventListener('pointerup', stageState.upF); 
             document.removeEventListener('pointermove', stageState.moveF); 
+            document.removeEventListener('pointerdown', stageState.onSliceDown);
             document.removeEventListener('pointermove', stageState.onSliceMove);
+            document.removeEventListener('pointerup', stageState.onSliceUp);
             frame.style.transform = ''; 
         }
     },
@@ -1099,6 +1138,75 @@ const STAGES = {
             
             // LED 1: Triple tap <= 1.0s
             stageState.taps = [];
+            // LED 4: Wires & DIP (10110111 => on,off,on,on,off,on,on,on)
+            document.getElementById('wires-container').style.display='block'; document.getElementById('dip-switches').style.display='grid';
+            stageState.cuts = 0; stageState.dips = [0,0,0,0,0,0,0,0];
+            stageState.isSlicingEX = false;
+            stageState.strokeDistEX = 0;
+            stageState.lastSlicePosEX = null;
+
+            document.querySelectorAll('.cut-wire').forEach(w => {
+                w.classList.remove('cut'); 
+                w.onpointerenter = null;
+                w.onpointerdown = null;
+            });
+
+            const checkWireSliceEX = (cx, cy) => {
+                document.querySelectorAll('.cut-wire').forEach(w => {
+                    if (!w.classList.contains('cut')) {
+                        const r = w.getBoundingClientRect();
+                        if (cx >= r.left - 8 && cx <= r.right + 8 && cy >= r.top - 8 && cy <= r.bottom + 8) {
+                            w.classList.add('cut');
+                            AudioSys.sfx.wireCut();
+                            stageState.cuts++;
+                        }
+                    }
+                });
+            };
+
+            stageState.onSliceDownEX = (e) => {
+                const p = getEventPos(e);
+                stageState.isSlicingEX = true;
+                stageState.strokeDistEX = 0;
+                stageState.lastSlicePosEX = { x: p.x, y: p.y };
+            };
+
+            stageState.onSliceMoveEX = (e) => {
+                const isMouseDown = (e.pointerType === 'mouse' && e.buttons === 1);
+                const isTouchMove = (e.pointerType !== 'mouse' && stageState.isSlicingEX);
+                if (!isMouseDown && !isTouchMove) return;
+
+                const p = getEventPos(e);
+                if (stageState.lastSlicePosEX) {
+                    const d = Math.hypot(p.x - stageState.lastSlicePosEX.x, p.y - stageState.lastSlicePosEX.y);
+                    stageState.strokeDistEX += d;
+                    stageState.lastSlicePosEX = { x: p.x, y: p.y };
+                } else {
+                    stageState.lastSlicePosEX = { x: p.x, y: p.y };
+                }
+
+                if (stageState.strokeDistEX >= 25) {
+                    checkWireSliceEX(p.x, p.y);
+                }
+            };
+
+            stageState.onSliceUpEX = () => {
+                stageState.isSlicingEX = false;
+                stageState.strokeDistEX = 0;
+                stageState.lastSlicePosEX = null;
+            };
+
+            document.addEventListener('pointerdown', stageState.onSliceDownEX);
+            document.addEventListener('pointermove', stageState.onSliceMoveEX);
+            document.addEventListener('pointerup', stageState.onSliceUpEX);
+
+            document.querySelectorAll('.dip').forEach((d,i) => {
+                d.onpointerdown = (e) => {
+                    e.stopPropagation(); if(stageState.st[3]) return;
+                    const st = d.dataset.state === "0" ? "1" : "0"; d.dataset.state = st; stageState.dips[i] = parseInt(st); AudioSys.sfx.click();
+                    if(stageState.cuts>=4 && stageState.dips.join('') === '10110111') { stageState.st[3]=true; UI.setLED(3, 'green'); AudioSys.sfx.thud(); chk(); }
+                };
+            });
             
             // LED 2: Hold 2s, HUD release 210-240
             document.getElementById('skill-hud').style.display='block';
@@ -1115,28 +1223,6 @@ const STAGES = {
                 if(stageState.fCnt>=10 && !stageState.st[2]) { stageState.st[2]=true; UI.setLED(2, 'green'); fuki.style.display='none'; AudioSys.sfx.buzz(); chk(); }
             };
             
-            // LED 4: Wires & DIP (10110111 => on,off,on,on,off,on,on,on)
-            document.getElementById('wires-container').style.display='block'; document.getElementById('dip-switches').style.display='grid';
-            stageState.cuts = 0; stageState.dips = [0,0,0,0,0,0,0,0];
-            const handleCutEX = (w) => {
-                if (!w.classList.contains('cut')) {
-                    w.classList.add('cut');
-                    AudioSys.sfx.wireCut();
-                    stageState.cuts++;
-                }
-            };
-            document.querySelectorAll('.cut-wire').forEach(w => {
-                w.classList.remove('cut'); 
-                w.onpointerenter = (e) => { if(e.buttons > 0) handleCutEX(w); };
-                w.onpointerdown = (e) => { e.stopPropagation(); handleCutEX(w); };
-            });
-            document.querySelectorAll('.dip').forEach((d,i) => {
-                d.onpointerdown = (e) => {
-                    e.stopPropagation(); if(stageState.st[3]) return;
-                    const st = d.dataset.state === "0" ? "1" : "0"; d.dataset.state = st; stageState.dips[i] = parseInt(st); AudioSys.sfx.click();
-                    if(stageState.cuts>=4 && stageState.dips.join('') === '10110111') { stageState.st[3]=true; UI.setLED(3, 'green'); AudioSys.sfx.thud(); chk(); }
-                };
-            });
             stageState.downF = (e) => { if(e.target.closest('#the-button')) return; if(stageState.cuts < 4) return; stageState.sx = getEventPos(e).x; stageState.dragF = true; };
             stageState.upF = () => { stageState.dragF = false; stageState.rot = stageState.curRot || stageState.rot || 0; };
             stageState.moveF = (e) => { if(stageState.dragF && stageState.cuts >= 4){ let ang = (stageState.rot||0) + (getEventPos(e).x - stageState.sx)*0.6; frame.style.transform = `rotateY(${ang}deg)`; stageState.curRot = ang; } };
@@ -1171,12 +1257,10 @@ const STAGES = {
                 stageState.hStart = performance.now(); stageState.hActive = true;
                 const loop = (t) => {
                     if(!stageState.hActive || stageState.st[1]) return;
-                    const el = (t - stageState.hStart)/1000;
-                    if(el >= 2.0) {
-                        const hudEl = el - 2.0; const deg = (hudEl / 1.2) * 360 % 360;
-                        document.getElementById('skill-needle').style.transform = `rotate(${deg}deg)`;
-                        stageState.curDeg = deg;
-                    }
+                    const el = (t - stageState.hStart) / 1000;
+                    const deg = (el * 180) % 360;
+                    document.getElementById('skill-needle').style.transform = `rotate(${deg}deg)`;
+                    stageState.curDeg = deg;
                     stageState.hAnim = requestAnimationFrame(loop);
                 };
                 stageState.hAnim = requestAnimationFrame(loop);
@@ -1190,7 +1274,7 @@ const STAGES = {
                 stageState.curDeg = undefined; document.getElementById('skill-needle').style.transform='rotate(180deg)';
             }
         },
-        cleanup() { cancelAnimationFrame(stageState.hAnim); document.removeEventListener('pointerup', stageState.upD); document.removeEventListener('pointermove', stageState.moveD); frame.removeEventListener('pointerdown', stageState.downF); document.removeEventListener('pointerup', stageState.upF); document.removeEventListener('pointermove', stageState.moveF); }
+        cleanup() { cancelAnimationFrame(stageState.hAnim); document.removeEventListener('pointerup', stageState.upD); document.removeEventListener('pointermove', stageState.moveD); frame.removeEventListener('pointerdown', stageState.downF); document.removeEventListener('pointerup', stageState.upF); document.removeEventListener('pointermove', stageState.moveF); document.removeEventListener('pointerdown', stageState.onSliceDownEX); document.removeEventListener('pointermove', stageState.onSliceMoveEX); document.removeEventListener('pointerup', stageState.onSliceUpEX); }
     }
 };
 
