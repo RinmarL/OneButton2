@@ -1467,10 +1467,10 @@ const STAGES = {
                 d.textContent = `> [SYS] TRACE LOG ${Math.floor(Math.random()*9000)}`;
                 la.appendChild(d);
             }
-            // ヒントログを緑色で3行に分けて出力（英語表記）
-            const h1 = document.createElement('div'); h1.className = 'log-entry'; h1.style.color = '#22c55e'; h1.style.fontWeight = 'bold'; h1.textContent = '> [BOOT_LOG]: PUSH'; la.appendChild(h1);
-            const h2 = document.createElement('div'); h2.className = 'log-entry'; h2.style.color = '#22c55e'; h2.style.fontWeight = 'bold'; h2.textContent = '> [BOOT_LOG]: SLIDE RIGHT'; la.appendChild(h2);
-            const h3 = document.createElement('div'); h3.className = 'log-entry'; h3.style.color = '#22c55e'; h3.style.fontWeight = 'bold'; h3.textContent = '> [BOOT_LOG]: HOLD 2 SECONDS'; la.appendChild(h3);
+            // ヒントログを3行に分けて出力（SYSログと完全に同色）
+            const h1 = document.createElement('div'); h1.className = 'log-entry'; h1.textContent = '> [BOOT_LOG]: PUSH'; la.appendChild(h1);
+            const h2 = document.createElement('div'); h2.className = 'log-entry'; h2.textContent = '> [BOOT_LOG]: SLIDE RIGHT'; la.appendChild(h2);
+            const h3 = document.createElement('div'); h3.className = 'log-entry'; h3.textContent = '> [BOOT_LOG]: HOLD 2 SECONDS'; la.appendChild(h3);
             
             for(let i = 0; i < 10; i++) {
                 const d = document.createElement('div');

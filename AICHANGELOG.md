@@ -587,3 +587,8 @@
   - > [BOOT_LOG]: SLIDE RIGHT
   - > [BOOT_LOG]: HOLD 2 SECONDS
   の3行（緑色太字）に変更しました。
+
+## 2026-08-24
+### Stage 09 (HISTORY) ヒントログの色をSYSログと完全一致化
+- **文字色の統一**:
+  - [BOOT_LOG] のヒントログ3行を個別のカスタムカラーから、他の [SYS] ログと完全に同一の標準ログスタイル（ar(--led-green)）に統一しました。
