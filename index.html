@@ -793,6 +793,7 @@ const STAGES = {
             logEntry.innerHTML = `> COUNT: <span class="log-num-drag" data-val="5">5</span>... <span class="log-num-drag" data-val="4">4</span>... <span class="log-num-drag" data-val="3">3</span>... <span class="log-num-drag" data-val="2">2</span>... <span class="log-num-drag" data-val="1">1</span>...`;
             UI.logArea.appendChild(logEntry);
             document.getElementById('log-wrapper').scrollTop = document.getElementById('log-wrapper').scrollHeight;
+            stageState.logEntry = logEntry;
 
             // 各数字のドラッグイベント
             logEntry.querySelectorAll('.log-num-drag').forEach(span => {
@@ -855,7 +856,11 @@ const STAGES = {
             } else {
                 AudioSys.sfx.buzz();
                 UI.log('エラー: 不正な値です (リセット)');
-                setTimeout(() => { if (currentStage === 5) STAGES[5].init(); }, 600);
+                stageState.sum = 0;
+                // 既存の数字ボタンのused状態を解除して元に戻す（増殖防止）
+                if (stageState.logEntry) {
+                    stageState.logEntry.querySelectorAll('.log-num-drag').forEach(s => s.classList.remove('used'));
+                }
             }
         },
         up() {
