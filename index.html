@@ -1827,8 +1827,9 @@ const STAGES = {
                     if (stageState.systemFailed) return;
                     if (stageState.sheetWiresCut < 8) return; // シートがあるうちは押せない
                     AudioSys.sfx.click();
-                    UI.log('よくみたらOMENだった...');
-                    setTimeout(() => AudioSys.sfx.dullClick(), 80);
+                    setTimeout(() => AudioSys.sfx.buzz(), 100);
+                    stageState.systemFailed = true;
+                    UI.log('よくみたらOMENだった... 再起動が必要だ。', 'error');
                 };
             }
 
@@ -1963,7 +1964,7 @@ const STAGES = {
                     stageState.open = true;
                 }, 1000);
 
-                // 1.5秒後（完全暗転完了時）：元通りバリア復活＆回転状態リセット
+                // 1.5秒後（完全暗転完了時）：元通りバリア復活＆ギミック類完全リセット
                 stageState.blackoutTimer = setTimeout(() => {
                     barrier.style.display = 'block';
                     barrier.style.opacity = '1';
@@ -1971,7 +1972,26 @@ const STAGES = {
                     stageState.open = false;
                     stageState.systemFailed = false; // システム障害から復帰！
 
-                    // 暗転中に回転している状況を全て元の状態に戻す
+                    // 1. LEDリセット（全て赤消灯）
+                    UI.resetLEDs();
+                    stageState.ledLit = [false, false, false];
+
+                    // 2. 赤いダミーボタンを非表示＆リセット
+                    if (redDummyBtn) {
+                        redDummyBtn.style.display = 'none';
+                        redDummyBtn.classList.remove('disabled-fade');
+                    }
+
+                    // 3. 背面の糸＆防護シートのリセット
+                    stageState.sheetWiresCut = 0;
+                    threads.forEach(t => t.classList.remove('cut'));
+                    if (sheet) {
+                        sheet.style.display = 'flex';
+                        sheet.style.opacity = '1';
+                        sheet.style.transform = 'scale(1)';
+                    }
+
+                    // 4. 暗転中に回転している状況を全て元の状態に戻す
                     frame.style.transition = 'none';
                     frame.style.transform = 'rotateY(0deg)';
                     stageState.rot = 0;
