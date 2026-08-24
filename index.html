@@ -451,32 +451,28 @@
 
         .log-num-drag {
             display: inline-block;
-            padding: 1px 7px;
-            margin: 0 3px;
-            background: rgba(0, 240, 255, 0.15);
-            border: 1px solid var(--core-cyan);
-            border-radius: 4px;
-            color: var(--core-cyan);
+            padding: 0 2px;
+            margin: 0 1px;
+            background: transparent;
+            border: none;
+            color: var(--led-green);
+            text-shadow: 0 0 3px var(--led-green);
             font-weight: bold;
+            font-family: inherit;
             cursor: grab;
             user-select: none;
             touch-action: none;
-            box-shadow: 0 0 5px rgba(0, 240, 255, 0.3);
-            transition: transform 0.1s ease, background 0.1s ease;
+            transition: transform 0.1s ease;
         }
         .log-num-drag:hover {
-            background: var(--core-cyan);
-            color: #000;
-            box-shadow: 0 0 10px var(--core-cyan);
-            transform: scale(1.15);
+            transform: scale(1.25);
+            text-shadow: 0 0 8px var(--led-green);
         }
         .log-num-drag.used {
-            opacity: 0.3;
+            opacity: 0.25;
             pointer-events: none;
-            border-color: #555;
-            color: #777;
-            background: transparent;
-            box-shadow: none;
+            color: #555;
+            text-shadow: none;
         }
 
         /* EX: DRAGGABLE BLADE (-B-) - タイトルと同化させて隠し要素に */
@@ -1040,7 +1036,7 @@ function loadStage(num) {
     }, 2000);
 }
 
-const STAGE_NAMES = { 1:'CONTACT2', 2:'BALANCE', 3:'JUST', 4:'FLICKS', 5:'DRAG&DROP', 6:'SWIPE', 7:'CODE', 8:'REBOOT', 9:'HISTORY', 10:'WIRE', 11:'FINAL-B-' };
+const STAGE_NAMES = { 1:'CONTACT2', 2:'BALANCE', 3:'JUST', 4:'FLICKS', 5:'NUM', 6:'SWIPE', 7:'CODE', 8:'REBOOT', 9:'HISTORY', 10:'WIRE', 11:'FINAL-B-' };
 
 const STAGES = {
     // 01: CONTACT2 (Double Tap <= 250ms)
@@ -1181,9 +1177,9 @@ const STAGES = {
 
             const segs = [
                 { start: [0, 0], end: [0, -60], len: 60, dir: [0, -1] },
-                { start: [0, -60], end: [60, -60], len: 60, dir: [1, 0] },
-                { start: [60, -60], end: [60, 60], len: 120, dir: [0, 1] },
-                { start: [60, 60], end: [0, 60], len: 60, dir: [-1, 0] },
+                { start: [0, -60], end: [100, -60], len: 100, dir: [1, 0] },
+                { start: [100, -60], end: [100, 60], len: 120, dir: [0, 1] },
+                { start: [100, 60], end: [0, 60], len: 100, dir: [-1, 0] },
                 { start: [0, 60], end: [0, -90], len: 150, dir: [0, -1] }
             ];
 
@@ -1222,9 +1218,9 @@ const STAGES = {
 
             const segs = [
                 { start: [0, 0], end: [0, -60], len: 60, dir: [0, -1] },
-                { start: [0, -60], end: [60, -60], len: 60, dir: [1, 0] },
-                { start: [60, -60], end: [60, 60], len: 120, dir: [0, 1] },
-                { start: [60, 60], end: [0, 60], len: 60, dir: [-1, 0] },
+                { start: [0, -60], end: [100, -60], len: 100, dir: [1, 0] },
+                { start: [100, -60], end: [100, 60], len: 120, dir: [0, 1] },
+                { start: [100, 60], end: [0, 60], len: 100, dir: [-1, 0] },
                 { start: [0, 60], end: [0, -90], len: 150, dir: [0, -1] }
             ];
 
@@ -1640,6 +1636,8 @@ const STAGES = {
             const disp = document.getElementById('digital-display');
             const dummyBtn = document.getElementById('dummy-back-btn');
             barrier.style.display = 'block';
+            barrier.style.opacity = '1';
+            barrier.style.pointerEvents = 'auto';
             barrier.classList.remove('impact');
             rebootBtn.style.display = 'flex';
             if (dummyBtn) {
@@ -1735,15 +1733,19 @@ const STAGES = {
                 overlay.style.transition = 'opacity 1.5s linear';
                 overlay.style.opacity = '1';
 
-                // 1.0秒後（暗転完了の残り0.5秒）にバリアが解ける！
+                // 1.0秒後（暗転完了の残り0.5秒）に0.1秒かけて滑らかにバリアが解ける！
                 stageState.barrierDropTimer = setTimeout(() => {
-                    barrier.style.display = 'none';
+                    barrier.style.transition = 'opacity 0.1s ease, transform 0.1s ease';
+                    barrier.style.opacity = '0';
+                    barrier.style.pointerEvents = 'none';
                     stageState.open = true;
                 }, 1000);
 
                 // 1.5秒後（完全暗転完了時）：元通りバリア復活＆回転状態リセット
                 stageState.blackoutTimer = setTimeout(() => {
                     barrier.style.display = 'block';
+                    barrier.style.opacity = '1';
+                    barrier.style.pointerEvents = 'auto';
                     stageState.open = false;
 
                     // 暗転中に回転している状況を全て元の状態に戻す
@@ -1808,6 +1810,9 @@ const STAGES = {
             if (barrier) {
                 barrier.onpointerdown = null;
                 barrier.classList.remove('impact');
+                barrier.style.display = 'none';
+                barrier.style.opacity = '';
+                barrier.style.pointerEvents = 'auto';
             }
             const overlay = document.getElementById('transition-overlay');
             if (overlay) {
