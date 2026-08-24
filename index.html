@@ -1871,14 +1871,20 @@ const STAGES = {
                 };
             }
 
-            // ミスリード: LOCKED表示パネルの回転
+            // ミスリード: LOCKED表示パネルの回転（5回転で外れて落下・システム障害）
             if (disp) {
+                disp.style.display = 'block';
+                disp.style.opacity = '1';
+                disp.style.transform = 'rotate(0deg)';
+                disp.style.transition = 'none';
                 disp.style.cursor = 'grab';
                 stageState.dAng = 0;
+                stageState.totalDAng = 0;
+                stageState.dispBroken = false;
                 stageState.dragDisp = false;
                 disp.onpointerdown = (e) => {
                     e.stopPropagation();
-                    if (stageState.systemFailed) return;
+                    if (stageState.systemFailed || stageState.dispBroken) return;
                     const r = disp.getBoundingClientRect();
                     stageState.dcx = r.left + r.width / 2;
                     stageState.dcy = r.top + r.height / 2;
@@ -1889,14 +1895,33 @@ const STAGES = {
                 };
             }
             stageState.onDispMove = (e) => {
-                if (!stageState.dragDisp || !disp || stageState.systemFailed) return;
+                if (!stageState.dragDisp || !disp || stageState.systemFailed || stageState.dispBroken) return;
                 const p = getEventPos(e);
                 const a = Math.atan2(p.y - stageState.dcy, p.x - stageState.dcx);
                 let da = a - stageState.lAng;
                 while (da > Math.PI) da -= 2 * Math.PI;
                 while (da < -Math.PI) da += 2 * Math.PI;
-                stageState.dAng += da * 180 / Math.PI;
+                const degDelta = da * 180 / Math.PI;
+                stageState.dAng += degDelta;
+                stageState.totalDAng = (stageState.totalDAng || 0) + Math.abs(degDelta);
                 stageState.lAng = a;
+
+                // 5回転（1800度）に達したら外れて落下！
+                if (stageState.totalDAng >= 1800) {
+                    stageState.dispBroken = true;
+                    stageState.dragDisp = false;
+                    stageState.systemFailed = true;
+                    AudioSys.sfx.thud();
+                    disp.style.transition = 'transform 0.6s cubic-bezier(0.5, 0, 1, 1), opacity 0.5s ease';
+                    disp.style.transform = `rotate(${stageState.dAng + 35}deg) translateY(650px)`;
+                    disp.style.opacity = '0';
+                    setTimeout(() => {
+                        if (stageState.dispBroken) disp.style.display = 'none';
+                    }, 600);
+                    UI.log('部品が外れた...再起動が必要だ。', 'error');
+                    return;
+                }
+
                 disp.style.transform = `rotate(${stageState.dAng}deg)`;
             };
             stageState.onDispUp = () => {
@@ -1991,7 +2016,7 @@ const STAGES = {
                         sheet.style.transform = 'scale(1)';
                     }
 
-                    // 4. 暗転中に回転している状況を全て元の状態に戻す
+                    // 4. 暗転中に回転している状況を全て元の状態に戻す（LOCKED脱落も復帰）
                     frame.style.transition = 'none';
                     frame.style.transform = 'rotateY(0deg)';
                     stageState.rot = 0;
@@ -2000,8 +2025,12 @@ const STAGES = {
 
                     if (disp) {
                         disp.style.transition = 'none';
+                        disp.style.display = 'block';
+                        disp.style.opacity = '1';
                         disp.style.transform = 'rotate(0deg)';
                         stageState.dAng = 0;
+                        stageState.totalDAng = 0;
+                        stageState.dispBroken = false;
                         stageState.dragDisp = false;
                     }
 
@@ -2074,6 +2103,9 @@ const STAGES = {
             if (disp) {
                 disp.onpointerdown = null;
                 disp.style.transform = '';
+                disp.style.display = 'block';
+                disp.style.opacity = '';
+                disp.style.transition = '';
                 disp.style.cursor = 'default';
             }
             UI.leds.forEach(l => {
