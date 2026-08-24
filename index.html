@@ -97,6 +97,51 @@
         .w-bl { bottom: 6px; left: 6px; transform: rotate(-45deg); }
         .w-br { bottom: 6px; right: 6px; transform: rotate(45deg); }
 
+        /* EX: HEAVY REINFORCED STEEL WIRES (極太・強化鋼鉄ワイヤー) */
+        #wires-container.ex-heavy .cut-wire {
+            height: 15px;
+            background: 
+                repeating-linear-gradient(90deg, 
+                    rgba(255,255,255,0.08) 0px, 
+                    rgba(255,255,255,0.08) 3px, 
+                    rgba(0,0,0,0.4) 3px, 
+                    rgba(0,0,0,0.4) 6px),
+                linear-gradient(180deg, #cbd5e1 0%, #64748b 30%, #334155 60%, #0f172a 100%);
+            border: 2px solid #0f172a;
+            border-radius: 4px;
+            box-shadow: 
+                0 6px 12px rgba(0,0,0,0.9), 
+                inset 0 1.5px 2px rgba(255,255,255,0.6),
+                inset 0 -2px 4px rgba(0,0,0,0.8);
+        }
+        #wires-container.ex-heavy .cut-wire::before,
+        #wires-container.ex-heavy .cut-wire::after {
+            top: 1px;
+            width: 9px;
+            height: 9px;
+            background: radial-gradient(circle, #e2e8f0 30%, #475569 70%, #0f172a 100%);
+            border-radius: 2px;
+            border: 1px solid #1e293b;
+            box-shadow: 0 2px 4px #000, inset 0 1px 1px #fff;
+        }
+        #wires-container.ex-heavy .cut-wire::before { left: 3px; }
+        #wires-container.ex-heavy .cut-wire::after { right: 3px; }
+
+        #wires-container.ex-heavy .cut-wire.cut::before {
+            top: -4px; left: 0; width: 28px; height: 11px;
+            background: linear-gradient(180deg, #94a3b8, #1e293b);
+            border-radius: 3px 0 0 3px;
+            transform: rotate(-32deg);
+            box-shadow: 0 3px 6px #000;
+        }
+        #wires-container.ex-heavy .cut-wire.cut::after {
+            top: 6px; right: 0; width: 28px; height: 11px;
+            background: linear-gradient(180deg, #94a3b8, #1e293b);
+            border-radius: 0 3px 3px 0;
+            transform: rotate(32deg);
+            box-shadow: 0 3px 6px #000;
+        }
+
         /* THE BUTTON (青色) */
         #the-button { width: 200px; height: 200px; border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; transform-style: preserve-3d; transform: translateZ(15px); transition: transform 0.1s; cursor: pointer; z-index: 20; }
         .btn-face-front { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #3b82f6, #1d4ed8 60%, #1e3a8a); border: 8px solid var(--metal-base); box-shadow: inset 0px 5px 10px rgba(255,255,255,0.4), inset 0px -10px 20px rgba(0,0,0,0.8), 0 10px 15px rgba(0,0,0,0.7), 0 0 20px rgba(2, 132, 199, 0.4); display: flex; flex-direction: column; justify-content: center; align-items: center; transform: translateZ(10px); transition: transform 0.1s, box-shadow 0.1s, background 0.2s; backface-visibility: hidden; }
@@ -948,8 +993,13 @@ function loadStage(num) {
     if(disp) { disp.className = 'locked'; disp.style.transform = ''; disp.style.cursor = 'default'; }
     UI.btn.className = ''; UI.btn.style.transform = ''; frame.style.transform = ''; frame.style.left = ''; frame.style.top = '';
     document.getElementById('btn-text').textContent = 'PUSH';
-    document.getElementById('pressure-bar').style.display = 'none';
-    document.getElementById('wires-container').style.display = 'none';
+    const wiresContainer = document.getElementById('wires-container');
+    wiresContainer.style.display = 'none';
+    if (num === 11) {
+        wiresContainer.classList.add('ex-heavy');
+    } else {
+        wiresContainer.classList.remove('ex-heavy');
+    }
     document.getElementById('back-switch').style.display = 'none';
     document.getElementById('back-switch').className = 'switch-off';
     const vKnob = document.getElementById('v-switch-knob');
