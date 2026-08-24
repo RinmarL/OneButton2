@@ -407,35 +407,39 @@
         }
         .back-sheet-thread {
             position: absolute;
-            width: 32px;
+            width: 44px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            cursor: pointer;
+            background: transparent;
+            touch-action: manipulation;
+        }
+        .back-sheet-thread::before {
+            content: '';
+            width: 100%;
             height: 2.5px;
             background: #e2e8f0;
             border-radius: 1px;
             box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 1px 2px #000;
-            pointer-events: auto;
-            cursor: pointer;
-            transition: transform 0.1s ease, background 0.1s ease, opacity 0.2s ease;
-        }
-        .back-sheet-thread:hover {
-            background: #fde047;
-            box-shadow: 0 0 8px #fde047;
-            transform: scale(1.25);
+            transition: opacity 0.2s ease;
         }
         .back-sheet-thread.cut {
             opacity: 0 !important;
-            transform: scale(0.3) !important;
             pointer-events: none !important;
         }
 
         /* 8方向の糸の配置 (140px × 140px 中心周り) */
-        .bt-0   { top: 10px; left: calc(50% - 16px); transform: rotate(0deg); }
-        .bt-45  { top: 22px; right: 18px; transform: rotate(45deg); }
-        .bt-90  { top: calc(50% - 1px); right: 6px; transform: rotate(90deg); }
-        .bt-135 { bottom: 22px; right: 18px; transform: rotate(135deg); }
-        .bt-180 { bottom: 10px; left: calc(50% - 16px); transform: rotate(180deg); }
-        .bt-225 { bottom: 22px; left: 18px; transform: rotate(225deg); }
-        .bt-270 { top: calc(50% - 1px); left: 6px; transform: rotate(270deg); }
-        .bt-315 { top: 22px; left: 18px; transform: rotate(315deg); }
+        .bt-0   { top: 0px; left: calc(50% - 22px); transform: rotate(0deg); }
+        .bt-45  { top: 12px; right: 8px; transform: rotate(45deg); }
+        .bt-90  { top: calc(50% - 11px); right: -6px; transform: rotate(90deg); }
+        .bt-135 { bottom: 12px; right: 8px; transform: rotate(135deg); }
+        .bt-180 { bottom: 0px; left: calc(50% - 22px); transform: rotate(180deg); }
+        .bt-225 { bottom: 12px; left: 8px; transform: rotate(225deg); }
+        .bt-270 { top: calc(50% - 11px); left: -6px; transform: rotate(270deg); }
+        .bt-315 { top: 12px; left: 8px; transform: rotate(315deg); }
 
         /* 08: RED DUMMY BUTTON (丸型・少し下に配置) */
         #red-dummy-btn {
@@ -562,6 +566,11 @@
             min-height: 100%;
         }
         .log-entry { margin: 2px 0; animation: fadeIn 0.3s; }
+        .log-entry.log-error {
+            color: #ef4444 !important;
+            text-shadow: 0 0 6px #ef4444 !important;
+            font-weight: bold;
+        }
         @keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
 
         .log-num-drag {
@@ -1047,9 +1056,9 @@ const UI = {
     btn: document.getElementById('the-button'),
     sectorDisp: document.getElementById('sector-display'),
     leds: [document.getElementById('led-1'), document.getElementById('led-2'), document.getElementById('led-3'), document.getElementById('led-4'), document.getElementById('led-5')],
-    log(msg) {
+    log(msg, type = null) {
         const div = document.createElement('div');
-        div.className = 'log-entry';
+        div.className = 'log-entry' + (type ? ` log-${type}` : '');
         div.textContent = `> ${msg}`;
         this.logArea.appendChild(div);
         const wrapper = document.getElementById('log-wrapper');
@@ -1138,7 +1147,7 @@ function loadStage(num) {
     if (redDummyBtn) {
         redDummyBtn.style.display = 'none';
         redDummyBtn.classList.remove('disabled-fade');
-        redDummyBtn.textContent = 'EMERGENCY RELEASE';
+        redDummyBtn.textContent = '';
     }
     document.getElementById('skill-hud').style.display = 'none';
     document.getElementById('center-socket').style.display = 'none';
@@ -1857,7 +1866,7 @@ const STAGES = {
                     setTimeout(() => AudioSys.sfx.buzz(), 100);
                     redDummyBtn.classList.add('disabled-fade');
                     stageState.systemFailed = true;
-                    UI.log('<span style="color: #ef4444; font-weight: bold; text-shadow: 0 0 5px #ef4444;">システム障害発生。再起動してください。</span>');
+                    UI.log('システム障害発生。再起動してください。', 'error');
                 };
             }
 
