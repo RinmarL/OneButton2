@@ -553,6 +553,8 @@
             padding: 10px;
             overflow-y: auto;
             overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
             font-size: 0.9rem;
             color: var(--led-green);
             text-shadow: 0 0 3px var(--led-green);
@@ -1089,6 +1091,31 @@ document.addEventListener('pointerup', handlers.up);
 btn.addEventListener('pointermove', handlers.move);
 document.addEventListener('pointermove', handlers.winMove);
 document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// ログエリアの確実なタッチ・スワイプスクロール対応（スマホ・PC両対応）
+const logWrapperEl = document.getElementById('log-wrapper');
+if (logWrapperEl) {
+    let isLogDragging = false;
+    let logStartY = 0;
+    let logStartScroll = 0;
+
+    logWrapperEl.addEventListener('pointerdown', (e) => {
+        isLogDragging = true;
+        logStartY = getEventPos(e).y;
+        logStartScroll = logWrapperEl.scrollTop;
+    }, { passive: true });
+
+    window.addEventListener('pointermove', (e) => {
+        if (!isLogDragging) return;
+        const currentY = getEventPos(e).y;
+        const dy = currentY - logStartY;
+        logWrapperEl.scrollTop = logStartScroll - dy;
+    }, { passive: true });
+
+    window.addEventListener('pointerup', () => {
+        isLogDragging = false;
+    }, { passive: true });
+}
 
 function completeStage() {
     if (stageTransitioning) return; stageTransitioning = true;
