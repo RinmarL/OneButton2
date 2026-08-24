@@ -615,6 +615,7 @@ const AudioSys = {
         noise.start(); gain.gain.setValueAtTime(vol, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
     },
     sfx: {
+        uiClick() { AudioSys.playOsc('sine', 600, 0.05, 0.1); },
         click() { 
             AudioSys.playOsc('triangle', 2200, 0.015, 0.25); 
             AudioSys.playNoise(0.012, 0.15, 'spark'); 
@@ -2127,7 +2128,7 @@ function initDebugPanel() {
 window.onload = () => {
     initDebugPanel();
     document.getElementById('start-btn').onclick = () => {
-        AudioSys.init(); AudioSys.sfx.click();
+        AudioSys.init(); AudioSys.sfx.uiClick();
         document.getElementById('start-screen').style.opacity = '0';
         setTimeout(() => { document.getElementById('start-screen').style.display = 'none'; loadStage(1); }, 500);
     };
