@@ -433,6 +433,37 @@
             box-shadow: none;
         }
 
+        /* EX: DRAGGABLE BLADE (-B-) */
+        #drag-blade {
+            display: inline-block;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            color: var(--core-cyan);
+            font-weight: 900;
+            letter-spacing: 2px;
+            padding: 0 2px;
+            border-radius: 4px;
+            position: relative;
+            z-index: 500;
+            transition: color 0.15s ease, filter 0.15s ease;
+        }
+        #drag-blade:hover {
+            color: #ffffff;
+            text-shadow: 0 0 10px #ffffff, 0 0 20px var(--core-cyan);
+            filter: drop-shadow(0 0 8px #00f0ff);
+        }
+        #drag-blade.blade-active {
+            position: fixed !important;
+            z-index: 99999 !important;
+            cursor: grabbing !important;
+            pointer-events: none !important;
+            transform: translate(-50%, -50%) scale(1.35) rotate(-20deg);
+            filter: drop-shadow(0 0 12px #00f0ff) drop-shadow(0 0 25px #ffffff);
+            color: #ffffff;
+            text-shadow: 0 0 10px #ffffff, 0 0 20px #00f0ff;
+        }
+
         @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
         .shake { animation: shake 0.5s; }
 
@@ -900,7 +931,7 @@ function loadStage(num) {
     stageTransitioning = false; stageState = {};
     UI.clearLog();
     UI.leds.forEach(l => { if(l){ l.style.cursor='default'; l.onpointerdown=null; l.style.backgroundColor=''; l.style.boxShadow=''; } });
-    const sName = num === 11 ? "FINAL-B-" : STAGE_NAMES[num]; UI.sectorDisp.innerHTML = num === 11 ? `SECT<span id="char-o1" class="char-target">O</span>R EX FINAL-B-` : `SECT<span id="char-o1" class="char-target">O</span>R ${num.toString().padStart(2, '0')} ${sName}`;
+    const sName = num === 11 ? "FINAL-B-" : STAGE_NAMES[num]; UI.sectorDisp.innerHTML = num === 11 ? `SECT<span id="char-o1" class="char-target">O</span>R EX FINAL<span id="drag-blade" class="blade-target">-B-</span>` : `SECT<span id="char-o1" class="char-target">O</span>R ${num.toString().padStart(2, '0')} ${sName}`;
     UI.log(num === 11 ? `セクター EX をロード中...` : `セクター ${num} をロード中...`);
     const l4 = document.getElementById('led-4'); const l5 = document.getElementById('led-5');
     if (num === 11) { if(l4) l4.style.display='block'; if(l5) l5.style.display='block'; }
@@ -2030,12 +2061,10 @@ const STAGES = {
             
             // LED 1: Triple tap <= 1.0s
             stageState.taps = [];
-            // LED 4: Wires & DIP (10110111 => on,off,on,on,off,on,on,on)
-            document.getElementById('wires-container').style.display='block'; document.getElementById('dip-switches').style.display='grid';
+            // LED 4: Wires & DIP (タイトルの『-B-』を刃としてドラッグして鉄線を切断)
+            document.getElementById('wires-container').style.display='block';
+            document.getElementById('dip-switches').style.display='grid';
             stageState.cuts = 0; stageState.dips = [0,0,0,0,0,0,0,0];
-            stageState.isSlicingEX = false;
-            stageState.strokeDistEX = 0;
-            stageState.lastSlicePosEX = null;
 
             document.querySelectorAll('.cut-wire').forEach(w => {
                 w.classList.remove('cut'); 
@@ -2043,54 +2072,55 @@ const STAGES = {
                 w.onpointerdown = null;
             });
 
-            const checkWireSliceEX = (cx, cy) => {
+            const blade = document.getElementById('drag-blade');
+            if (blade) {
+                stageState.bladeDragging = false;
+                blade.onpointerdown = (e) => {
+                    e.stopPropagation();
+                    if (stageState.cuts >= 4) return;
+                    stageState.bladeDragging = true;
+                    blade.classList.add('blade-active');
+                    const p = getEventPos(e);
+                    blade.style.left = p.x + 'px';
+                    blade.style.top = p.y + 'px';
+                    AudioSys.sfx.click();
+                };
+            }
+
+            stageState.onBladeMove = (e) => {
+                if (!stageState.bladeDragging || !blade) return;
+                const p = getEventPos(e);
+                blade.style.left = p.x + 'px';
+                blade.style.top = p.y + 'px';
+
+                // 刃（-B-）の矩形とワイヤー矩形の交差判定
+                const bRect = blade.getBoundingClientRect();
                 document.querySelectorAll('.cut-wire').forEach(w => {
                     if (!w.classList.contains('cut')) {
-                        const r = w.getBoundingClientRect();
-                        if (cx >= r.left - 8 && cx <= r.right + 8 && cy >= r.top - 8 && cy <= r.bottom + 8) {
+                        const wr = w.getBoundingClientRect();
+                        if (bRect.left < wr.right && bRect.right > wr.left &&
+                            bRect.top < wr.bottom && bRect.bottom > wr.top) {
                             w.classList.add('cut');
                             AudioSys.sfx.wireCut();
                             stageState.cuts++;
+                            if (stageState.cuts >= 4) {
+                                UI.log('鉄線切断完了。');
+                            }
                         }
                     }
                 });
             };
 
-            stageState.onSliceDownEX = (e) => {
-                const p = getEventPos(e);
-                stageState.isSlicingEX = true;
-                stageState.strokeDistEX = 0;
-                stageState.lastSlicePosEX = { x: p.x, y: p.y };
+            stageState.onBladeUp = () => {
+                if (!stageState.bladeDragging || !blade) return;
+                stageState.bladeDragging = false;
+                blade.classList.remove('blade-active');
+                blade.style.left = '';
+                blade.style.top = '';
             };
 
-            stageState.onSliceMoveEX = (e) => {
-                const isMouseDown = (e.pointerType === 'mouse' && e.buttons === 1);
-                const isTouchMove = (e.pointerType !== 'mouse' && stageState.isSlicingEX);
-                if (!isMouseDown && !isTouchMove) return;
-
-                const p = getEventPos(e);
-                if (stageState.lastSlicePosEX) {
-                    const d = Math.hypot(p.x - stageState.lastSlicePosEX.x, p.y - stageState.lastSlicePosEX.y);
-                    stageState.strokeDistEX += d;
-                    stageState.lastSlicePosEX = { x: p.x, y: p.y };
-                } else {
-                    stageState.lastSlicePosEX = { x: p.x, y: p.y };
-                }
-
-                if (stageState.strokeDistEX >= 25) {
-                    checkWireSliceEX(p.x, p.y);
-                }
-            };
-
-            stageState.onSliceUpEX = () => {
-                stageState.isSlicingEX = false;
-                stageState.strokeDistEX = 0;
-                stageState.lastSlicePosEX = null;
-            };
-
-            document.addEventListener('pointerdown', stageState.onSliceDownEX);
-            document.addEventListener('pointermove', stageState.onSliceMoveEX);
-            document.addEventListener('pointerup', stageState.onSliceUpEX);
+            document.addEventListener('pointermove', stageState.onBladeMove);
+            document.addEventListener('pointerup', stageState.onBladeUp);
 
             document.querySelectorAll('.dip').forEach((d,i) => {
                 d.onpointerdown = (e) => {
@@ -2133,7 +2163,7 @@ const STAGES = {
                 if (stageState.st[2]) return;
                 startFukiTimer(); // クリックされるたびに1秒タイマー延長
                 stageState.fCnt++;
-                AudioSys.sfx.knock(); // 硬いものを叩く音
+                AudioSys.sfx.deflect(); // キン！と弾かれる音
                 if(stageState.fCnt>3) fuki.style.color='#f472b6';
                 if(stageState.fCnt>6) fuki.style.color='#ef4444';
                 if(stageState.fCnt>8) fuki.classList.add('cracked');
@@ -2292,14 +2322,20 @@ const STAGES = {
                 fuki.classList.remove('cracked');
                 fuki.style.color = '';
             }
+            const blade = document.getElementById('drag-blade');
+            if (blade) {
+                blade.onpointerdown = null;
+                blade.classList.remove('blade-active');
+                blade.style.left = '';
+                blade.style.top = '';
+            }
+            document.removeEventListener('pointermove', stageState.onBladeMove);
+            document.removeEventListener('pointerup', stageState.onBladeUp);
             document.removeEventListener('pointerup', stageState.upD);
             document.removeEventListener('pointermove', stageState.moveD);
             frame.removeEventListener('pointerdown', stageState.downF);
             document.removeEventListener('pointerup', stageState.upF);
             document.removeEventListener('pointermove', stageState.moveF);
-            document.removeEventListener('pointerdown', stageState.onSliceDownEX);
-            document.removeEventListener('pointermove', stageState.onSliceMoveEX);
-            document.removeEventListener('pointerup', stageState.onSliceUpEX);
             const disp = document.getElementById('digital-display');
             if (disp) disp.style.cursor = 'default';
         }
