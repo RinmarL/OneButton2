@@ -303,11 +303,11 @@
             box-shadow: 0 0 12px rgba(0, 240, 255, 0.9), inset 0 1px 2px rgba(255,255,255,0.9); 
         }
 
-        /* 08: DUMMY OVERRIDE BUTTON (OMEN), SHEET COVER & 8 WIRES */
+        /* 08: DUMMY OVERRIDE BUTTON (OMEN), SHEET COVER & 8 THREADS */
         #dummy-back-container {
             position: relative;
-            width: 180px;
-            height: 180px;
+            width: 140px;
+            height: 140px;
             display: none;
             justify-content: center;
             align-items: center;
@@ -315,16 +315,16 @@
             touch-action: none;
         }
         #dummy-back-btn {
-            width: 130px;
-            height: 130px;
+            width: 78px;
+            height: 78px;
             border-radius: 50%;
             background: radial-gradient(circle at 35% 35%, #22c55e 0%, #15803d 60%, #14532d 100%);
-            border: 6px solid #1e293b;
+            border: 4px solid #1e293b;
             box-shadow: 
-                0 0 25px rgba(34, 197, 94, 0.6), 
-                inset 0 4px 8px rgba(255, 255, 255, 0.4), 
-                inset 0 -6px 12px rgba(0, 0, 0, 0.8),
-                0 10px 20px rgba(0, 0, 0, 0.7);
+                0 0 18px rgba(34, 197, 94, 0.6), 
+                inset 0 3px 6px rgba(255, 255, 255, 0.4), 
+                inset 0 -4px 8px rgba(0, 0, 0, 0.8),
+                0 6px 14px rgba(0, 0, 0, 0.7);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -335,168 +335,144 @@
             transition: transform 0.08s ease, box-shadow 0.08s ease;
         }
         #dummy-back-btn:active {
-            transform: scale(0.94) translateY(4px);
+            transform: scale(0.92) translateY(2px);
             box-shadow: 
-                0 0 15px rgba(34, 197, 94, 0.4), 
-                inset 0 6px 15px rgba(0, 0, 0, 0.9), 
-                0 4px 8px rgba(0, 0, 0, 0.8);
+                0 0 10px rgba(34, 197, 94, 0.4), 
+                inset 0 4px 10px rgba(0, 0, 0, 0.9), 
+                0 2px 5px rgba(0, 0, 0, 0.8);
         }
         .dummy-btn-bezel {
             position: absolute;
-            top: -12px;
-            left: -12px;
-            width: calc(100% + 24px);
-            height: calc(100% + 24px);
+            top: -8px;
+            left: -8px;
+            width: calc(100% + 16px);
+            height: calc(100% + 16px);
             border-radius: 50%;
-            border: 3px solid #475569;
-            box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), 0 4px 10px rgba(0,0,0,0.8);
+            border: 2px solid #475569;
+            box-shadow: inset 0 1px 3px rgba(255,255,255,0.2), 0 3px 8px rgba(0,0,0,0.8);
             pointer-events: none;
         }
         .dummy-btn-label {
-            font-size: 1.6rem;
+            font-size: 1.15rem;
             font-weight: 900;
-            letter-spacing: 4px;
+            letter-spacing: 2px;
             color: #ffffff;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0,0,0,0.8);
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0,0,0,0.8);
             pointer-events: none;
         }
 
         /* 08: BACK SHEET COVER */
         #back-sheet-cover {
             position: absolute;
-            width: 145px;
-            height: 145px;
-            border-radius: 12px;
-            background: rgba(15, 23, 42, 0.85);
-            border: 2px dashed rgba(255, 255, 255, 0.4);
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9), 0 4px 15px rgba(0, 0, 0, 0.8);
+            width: 95px;
+            height: 95px;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1.5px dashed rgba(255, 255, 255, 0.45);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9), 0 4px 12px rgba(0, 0, 0, 0.8);
             z-index: 20;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             pointer-events: none;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(3px);
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
         .sheet-pattern {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(45deg, rgba(234, 179, 8, 0.15), rgba(234, 179, 8, 0.15) 10px, transparent 10px, transparent 20px);
-            border-radius: 10px;
+            background: repeating-linear-gradient(45deg, rgba(234, 179, 8, 0.15), rgba(234, 179, 8, 0.15) 8px, transparent 8px, transparent 16px);
+            border-radius: 8px;
         }
         .sheet-label {
             position: relative;
             z-index: 2;
-            font-size: 0.65rem;
+            font-size: 0.5rem;
             font-weight: bold;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             color: #cbd5e1;
             text-shadow: 0 1px 2px #000;
-            background: rgba(0,0,0,0.7);
-            padding: 2px 6px;
-            border-radius: 4px;
+            background: rgba(0,0,0,0.75);
+            padding: 1px 4px;
+            border-radius: 3px;
         }
 
-        /* 08: 8 WIRES AROUND SHEET */
+        /* 08: 8 THREADS AROUND SHEET (糸・クリックで切れる) */
         #back-wire-container {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: 30;
             pointer-events: none;
         }
-        .back-sheet-wire {
+        .back-sheet-thread {
             position: absolute;
-            width: 46px;
-            height: 8px;
-            background: linear-gradient(180deg, #94a3b8 0%, #475569 35%, #1e293b 70%, #0f172a 100%);
-            border: 1px solid #1e293b;
-            border-radius: 3px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.4);
+            width: 32px;
+            height: 2.5px;
+            background: #e2e8f0;
+            border-radius: 1px;
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 1px 2px #000;
             pointer-events: auto;
-            cursor: crosshair;
-            transition: all 0.2s ease;
+            cursor: pointer;
+            transition: transform 0.1s ease, background 0.1s ease, opacity 0.2s ease;
         }
-        .back-sheet-wire::before, .back-sheet-wire::after {
-            content: '';
-            position: absolute;
-            top: 1px;
-            width: 5px;
-            height: 5px;
-            background: radial-gradient(circle, #f8fafc, #475569);
-            border-radius: 50%;
-            box-shadow: 0 1px 1px #000;
+        .back-sheet-thread:hover {
+            background: #fde047;
+            box-shadow: 0 0 8px #fde047;
+            transform: scale(1.25);
         }
-        .back-sheet-wire::before { left: 2px; }
-        .back-sheet-wire::after { right: 2px; }
-
-        .back-sheet-wire.cut {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            pointer-events: none;
-        }
-        .back-sheet-wire.cut::before {
-            top: -2px; left: 0; width: 18px; height: 6px;
-            background: linear-gradient(180deg, #64748b, #1e293b);
-            border-radius: 2px 0 0 2px;
-            transform: rotate(-30deg);
-        }
-        .back-sheet-wire.cut::after {
-            top: 4px; right: 0; width: 18px; height: 6px;
-            background: linear-gradient(180deg, #64748b, #1e293b);
-            border-radius: 0 2px 2px 0;
-            transform: rotate(30deg);
+        .back-sheet-thread.cut {
+            opacity: 0 !important;
+            transform: scale(0.3) !important;
+            pointer-events: none !important;
         }
 
-        /* 8方向の配置 */
-        .bw-0   { top: 2px; left: calc(50% - 23px); transform: rotate(0deg); }
-        .bw-45  { top: 20px; right: 10px; transform: rotate(45deg); }
-        .bw-90  { top: calc(50% - 4px); right: -6px; transform: rotate(90deg); }
-        .bw-135 { bottom: 20px; right: 10px; transform: rotate(135deg); }
-        .bw-180 { bottom: 2px; left: calc(50% - 23px); transform: rotate(180deg); }
-        .bw-225 { bottom: 20px; left: 10px; transform: rotate(225deg); }
-        .bw-270 { top: calc(50% - 4px); left: -6px; transform: rotate(270deg); }
-        .bw-315 { top: 20px; left: 10px; transform: rotate(315deg); }
+        /* 8方向の糸の配置 (140px × 140px 中心周り) */
+        .bt-0   { top: 10px; left: calc(50% - 16px); transform: rotate(0deg); }
+        .bt-45  { top: 22px; right: 18px; transform: rotate(45deg); }
+        .bt-90  { top: calc(50% - 1px); right: 6px; transform: rotate(90deg); }
+        .bt-135 { bottom: 22px; right: 18px; transform: rotate(135deg); }
+        .bt-180 { bottom: 10px; left: calc(50% - 16px); transform: rotate(180deg); }
+        .bt-225 { bottom: 22px; left: 18px; transform: rotate(225deg); }
+        .bt-270 { top: calc(50% - 1px); left: 6px; transform: rotate(270deg); }
+        .bt-315 { top: 22px; left: 18px; transform: rotate(315deg); }
 
-        /* 08: RED DUMMY BUTTON (LED下に出現する赤いボタン) */
+        /* 08: RED DUMMY BUTTON (丸型・少し下に配置) */
         #red-dummy-btn {
             position: absolute;
-            top: 52px;
-            right: 20px;
-            padding: 8px 14px;
-            background: radial-gradient(circle at 35% 35%, #ef4444 0%, #b91c1c 60%, #7f1d1d 100%);
-            border: 2px solid #ef4444;
-            border-radius: 6px;
-            color: #ffffff;
-            font-size: 0.72rem;
-            font-weight: bold;
-            letter-spacing: 1.5px;
-            box-shadow: 0 0 15px rgba(239, 68, 68, 0.7), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+            top: 75px;
+            right: 28px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #ef4444 0%, #dc2626 60%, #991b1b 100%);
+            border: 3px solid #f87171;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.8), inset 0 2px 4px rgba(255, 255, 255, 0.5), inset 0 -2px 4px rgba(0,0,0,0.6);
             cursor: pointer;
             user-select: none;
             z-index: 500;
             display: none;
             animation: redBtnPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            transition: background 0.5s ease, border-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease, opacity 0.5s ease, transform 0.1s ease;
+            transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease, opacity 0.4s ease, transform 0.1s ease;
         }
         @keyframes redBtnPop {
-            0% { opacity: 0; transform: scale(0.6); }
+            0% { opacity: 0; transform: scale(0.4); }
             100% { opacity: 1; transform: scale(1); }
         }
         #red-dummy-btn:hover {
             box-shadow: 0 0 25px rgba(239, 68, 68, 1);
-            transform: scale(1.05);
+            transform: scale(1.1);
+        }
+        #red-dummy-btn:active {
+            transform: scale(0.92);
         }
         #red-dummy-btn.disabled-fade {
             background: #334155 !important;
             border-color: #475569 !important;
-            color: #94a3b8 !important;
             box-shadow: none !important;
             filter: grayscale(1);
-            opacity: 0.5;
+            opacity: 0.4;
             pointer-events: none !important;
-            transform: scale(0.95);
             cursor: default;
         }
 
@@ -839,7 +815,7 @@
                 <div class="led" id="led-1"></div><div class="led" id="led-2"></div><div class="led" id="led-3"></div>
                 <div class="led" id="led-4" style="display: none;"></div><div class="led" id="led-5" style="display: none;"></div>
             </div>
-            <button id="red-dummy-btn" style="display:none;">EMERGENCY RELEASE</button>
+            <button id="red-dummy-btn" style="display:none;"></button>
         </div>
         <div id="button-area">
             <div id="timer-display" style="text-align: center; font-size: 2.2rem; color: var(--core-cyan); font-family: 'Courier New', monospace; font-weight: bold; margin-bottom: 5px; opacity: 0; text-shadow: 0 0 10px var(--core-cyan); letter-spacing: 3px;">3.00</div>
@@ -875,14 +851,14 @@
                             <span class="sheet-label">PROTECTION COVER</span>
                         </div>
                         <div id="back-wire-container">
-                            <div class="back-sheet-wire bw-0" data-idx="0"></div>
-                            <div class="back-sheet-wire bw-45" data-idx="1"></div>
-                            <div class="back-sheet-wire bw-90" data-idx="2"></div>
-                            <div class="back-sheet-wire bw-135" data-idx="3"></div>
-                            <div class="back-sheet-wire bw-180" data-idx="4"></div>
-                            <div class="back-sheet-wire bw-225" data-idx="5"></div>
-                            <div class="back-sheet-wire bw-270" data-idx="6"></div>
-                            <div class="back-sheet-wire bw-315" data-idx="7"></div>
+                            <div class="back-sheet-thread bt-0" data-idx="0"></div>
+                            <div class="back-sheet-thread bt-45" data-idx="1"></div>
+                            <div class="back-sheet-thread bt-90" data-idx="2"></div>
+                            <div class="back-sheet-thread bt-135" data-idx="3"></div>
+                            <div class="back-sheet-thread bt-180" data-idx="4"></div>
+                            <div class="back-sheet-thread bt-225" data-idx="5"></div>
+                            <div class="back-sheet-thread bt-270" data-idx="6"></div>
+                            <div class="back-sheet-thread bt-315" data-idx="7"></div>
                         </div>
                     </div>
                     <div id="back-switch" class="switch-off" style="display:none;">
@@ -1799,7 +1775,7 @@ const STAGES = {
             const dummyCont = document.getElementById('dummy-back-container');
             const dummyBtn = document.getElementById('dummy-back-btn');
             const sheet = document.getElementById('back-sheet-cover');
-            const backWires = document.querySelectorAll('.back-sheet-wire');
+            const threads = document.querySelectorAll('.back-sheet-thread');
             const redDummyBtn = document.getElementById('red-dummy-btn');
 
             barrier.style.display = 'block';
@@ -1808,7 +1784,11 @@ const STAGES = {
             barrier.classList.remove('impact');
             rebootBtn.style.display = 'flex';
 
-            // 背面防護シート＆8本ワイヤー＆OMENボタンの初期化
+            stageState.systemFailed = false;
+            stageState.rebooting = false;
+            stageState.open = false;
+
+            // 背面防護シート＆8本の糸＆OMENボタンの初期化
             if (dummyCont) dummyCont.style.display = 'flex';
             if (sheet) {
                 sheet.style.display = 'flex';
@@ -1816,11 +1796,26 @@ const STAGES = {
                 sheet.style.transform = 'scale(1)';
             }
             stageState.sheetWiresCut = 0;
-            backWires.forEach(w => w.classList.remove('cut'));
+            threads.forEach(t => {
+                t.classList.remove('cut');
+                t.onpointerdown = (e) => {
+                    e.stopPropagation();
+                    if (stageState.systemFailed || t.classList.contains('cut')) return;
+                    t.classList.add('cut');
+                    AudioSys.sfx.wireCut();
+                    stageState.sheetWiresCut++;
+                    if (stageState.sheetWiresCut >= 8 && sheet) {
+                        sheet.style.opacity = '0';
+                        sheet.style.transform = 'scale(0.8) rotate(10deg)';
+                        setTimeout(() => { sheet.style.display = 'none'; }, 300);
+                    }
+                };
+            });
 
             if (dummyBtn) {
                 dummyBtn.onpointerdown = (e) => {
                     e.stopPropagation();
+                    if (stageState.systemFailed) return;
                     if (stageState.sheetWiresCut < 8) return; // シートがあるうちは押せない
                     AudioSys.sfx.click();
                     UI.log('よくみたらOMENだった...');
@@ -1828,63 +1823,7 @@ const STAGES = {
                 };
             }
 
-            // 背面ワイヤーのスワイプ切断処理
-            const checkBackWireSlice = (cx, cy) => {
-                backWires.forEach(w => {
-                    if (!w.classList.contains('cut')) {
-                        const r = w.getBoundingClientRect();
-                        if (cx >= r.left - 6 && cx <= r.right + 6 && cy >= r.top - 6 && cy <= r.bottom + 6) {
-                            w.classList.add('cut');
-                            AudioSys.sfx.wireCut();
-                            stageState.sheetWiresCut++;
-                            if (stageState.sheetWiresCut >= 8 && sheet) {
-                                sheet.style.opacity = '0';
-                                sheet.style.transform = 'scale(0.8) rotate(10deg)';
-                                setTimeout(() => { sheet.style.display = 'none'; }, 300);
-                            }
-                        }
-                    }
-                });
-            };
-
-            stageState.onBackSliceDown = (e) => {
-                if (stageState.sheetWiresCut >= 8) return;
-                const p = getEventPos(e);
-                stageState.isBackSlicing = true;
-                stageState.backStrokeDist = 0;
-                stageState.lastBackSlicePos = { x: p.x, y: p.y };
-            };
-
-            stageState.onBackSliceMove = (e) => {
-                const isMouseDown = (e.pointerType === 'mouse' && e.buttons === 1);
-                const isTouchMove = (e.pointerType !== 'mouse' && stageState.isBackSlicing);
-                if (!isMouseDown && !isTouchMove) return;
-                if (stageState.sheetWiresCut >= 8) return;
-
-                const p = getEventPos(e);
-                if (stageState.lastBackSlicePos) {
-                    stageState.backStrokeDist += Math.hypot(p.x - stageState.lastBackSlicePos.x, p.y - stageState.lastBackSlicePos.y);
-                    stageState.lastBackSlicePos = { x: p.x, y: p.y };
-                } else {
-                    stageState.lastBackSlicePos = { x: p.x, y: p.y };
-                }
-
-                if (stageState.backStrokeDist >= 20) {
-                    checkBackWireSlice(p.x, p.y);
-                }
-            };
-
-            stageState.onBackSliceUp = () => {
-                stageState.isBackSlicing = false;
-                stageState.backStrokeDist = 0;
-                stageState.lastBackSlicePos = null;
-            };
-
-            document.addEventListener('pointerdown', stageState.onBackSliceDown);
-            document.addEventListener('pointermove', stageState.onBackSliceMove);
-            document.addEventListener('pointerup', stageState.onBackSliceUp);
-
-            // 右上LEDのタップで緑点灯 ➔ 3つ点灯で赤いボタン出現
+            // 右上LEDのタップで緑点灯 ➔ 3つ点灯で赤い丸ボタン出現
             stageState.ledLit = [false, false, false];
             [0, 1, 2].forEach(i => {
                 const l = UI.leds[i];
@@ -1892,6 +1831,7 @@ const STAGES = {
                     l.style.cursor = 'pointer';
                     l.onpointerdown = (e) => {
                         e.stopPropagation();
+                        if (stageState.systemFailed) return;
                         if (!stageState.ledLit[i]) {
                             stageState.ledLit[i] = true;
                             UI.setLED(i, 'green');
@@ -1899,7 +1839,6 @@ const STAGES = {
                             if (stageState.ledLit.every(v => v) && redDummyBtn) {
                                 redDummyBtn.style.display = 'block';
                                 redDummyBtn.classList.remove('disabled-fade');
-                                redDummyBtn.textContent = 'EMERGENCY RELEASE';
                                 AudioSys.sfx.thud();
                             }
                         }
@@ -1907,22 +1846,20 @@ const STAGES = {
                 }
             });
 
-            // 赤いダミーボタン押下 ➔ グレーにフェード変化して無力化
+            // 赤いダミーボタン押下 ➔ 赤字で障害ログ出力＆再起動以外操作不能に
             if (redDummyBtn) {
                 redDummyBtn.style.display = 'none';
                 redDummyBtn.classList.remove('disabled-fade');
                 redDummyBtn.onpointerdown = (e) => {
                     e.stopPropagation();
-                    if (redDummyBtn.classList.contains('disabled-fade')) return;
+                    if (redDummyBtn.classList.contains('disabled-fade') || stageState.systemFailed) return;
                     AudioSys.sfx.click();
-                    setTimeout(() => AudioSys.sfx.buzz(), 120);
+                    setTimeout(() => AudioSys.sfx.buzz(), 100);
                     redDummyBtn.classList.add('disabled-fade');
-                    redDummyBtn.textContent = 'SYSTEM OFFLINE';
+                    stageState.systemFailed = true;
+                    UI.log('<span style="color: #ef4444; font-weight: bold; text-shadow: 0 0 5px #ef4444;">システム障害発生。再起動してください。</span>');
                 };
             }
-
-            stageState.rebooting = false;
-            stageState.open = false;
 
             // ミスリード: LOCKED表示パネルの回転
             if (disp) {
@@ -1931,6 +1868,7 @@ const STAGES = {
                 stageState.dragDisp = false;
                 disp.onpointerdown = (e) => {
                     e.stopPropagation();
+                    if (stageState.systemFailed) return;
                     const r = disp.getBoundingClientRect();
                     stageState.dcx = r.left + r.width / 2;
                     stageState.dcy = r.top + r.height / 2;
@@ -1941,7 +1879,7 @@ const STAGES = {
                 };
             }
             stageState.onDispMove = (e) => {
-                if (!stageState.dragDisp || !disp) return;
+                if (!stageState.dragDisp || !disp || stageState.systemFailed) return;
                 const p = getEventPos(e);
                 const a = Math.atan2(p.y - stageState.dcy, p.x - stageState.dcx);
                 let da = a - stageState.lAng;
@@ -1962,13 +1900,14 @@ const STAGES = {
             stageState.dragF = false;
             frame.style.cursor = 'grab';
             stageState.downF = (e) => {
+                if (stageState.systemFailed) return;
                 if (e.target.closest('#the-button') || e.target.closest('#reboot-btn')) return;
                 stageState.sx = getEventPos(e).x;
                 stageState.dragF = true;
                 frame.style.transition = 'none';
             };
             stageState.moveF = (e) => {
-                if (!stageState.dragF) return;
+                if (!stageState.dragF || stageState.systemFailed) return;
                 const dx = getEventPos(e).x - stageState.sx;
                 let ang = stageState.rot + dx * 0.6;
                 frame.style.transform = `rotateY(${ang}deg)`;
@@ -1986,6 +1925,7 @@ const STAGES = {
             // バリアクリック時の弾かれる演出（キンッ音＋衝撃明滅）
             barrier.onpointerdown = (e) => {
                 e.stopPropagation();
+                if (stageState.systemFailed) return;
                 if (!stageState.open) {
                     AudioSys.sfx.deflect();
                     barrier.classList.add('impact');
@@ -2020,6 +1960,7 @@ const STAGES = {
                     barrier.style.opacity = '1';
                     barrier.style.pointerEvents = 'auto';
                     stageState.open = false;
+                    stageState.systemFailed = false; // システム障害から復帰！
 
                     // 暗転中に回転している状況を全て元の状態に戻す
                     frame.style.transition = 'none';
@@ -2046,6 +1987,7 @@ const STAGES = {
             };
         },
         down() {
+            if (stageState.systemFailed) return;
             if (stageState.open) {
                 UI.btn.classList.add('pressed');
                 AudioSys.sfx.click();
@@ -2082,6 +2024,8 @@ const STAGES = {
                 redDummyBtn.onpointerdown = null;
                 redDummyBtn.classList.remove('disabled-fade');
             }
+            const threads = document.querySelectorAll('.back-sheet-thread');
+            threads.forEach(t => { t.onpointerdown = null; });
             const rebootBtn = document.getElementById('reboot-btn');
             if (rebootBtn) rebootBtn.onpointerdown = null;
             const barrier = document.getElementById('barrier');
@@ -2109,9 +2053,6 @@ const STAGES = {
                     l.onpointerdown = null;
                 }
             });
-            document.removeEventListener('pointerdown', stageState.onBackSliceDown);
-            document.removeEventListener('pointermove', stageState.onBackSliceMove);
-            document.removeEventListener('pointerup', stageState.onBackSliceUp);
             frame.removeEventListener('pointerdown', stageState.downF);
             document.removeEventListener('pointermove', stageState.moveF);
             document.removeEventListener('pointerup', stageState.upF);
