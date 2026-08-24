@@ -2090,8 +2090,16 @@ const STAGES = {
             UI.clearLog();
             UI.log('セクター EX をロード中...');
 
-            // 上部: 本物のヒントSYS_MEMO
+            // 上部: 本物のヒントSYS_MEMO 1 (LOCKED回転ヒント)
             UI.log('[SYS_MEMO]: →　←　→');
+
+            // ダミーSYS_MEMO行
+            UI.log('[SYS_MEMO]: 補助リアクター同調率 94.2%');
+            UI.log('[SYS_MEMO]: 暗号化キー: 0x8F4A2C');
+            UI.log('[SYS_MEMO]: 内部循環冷却システム正常');
+            UI.log('[SYS_MEMO]: サブプロセッサ応答待機中');
+
+            // 本物のヒントSYS_MEMO 2 (DIPスイッチヒント)
             UI.log('[SYS_MEMO]: 10110111');
 
             // 中間: 世界観・ダミーのSYS_MEMO行
