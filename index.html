@@ -164,7 +164,7 @@
             z-index: 25; 
             pointer-events: auto; 
             display: none; 
-            transition: opacity 0.15s ease, transform 0.1s ease;
+            transition: opacity 0.2s ease, transform 0.1s ease;
         }
         #barrier.impact {
             background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(0, 240, 255, 0.4) 60%, rgba(0, 240, 255, 0.8) 100%);
@@ -1981,9 +1981,9 @@ const STAGES = {
                 overlay.style.transition = 'opacity 1.5s linear';
                 overlay.style.opacity = '1';
 
-                // 1.0秒後（暗転完了の残り0.5秒）に0.1秒かけて滑らかにバリアが解ける！
+                // 1.0秒後（暗転完了の残り0.5秒）に0.2秒かけて滑らかにバリアが解ける！
                 stageState.barrierDropTimer = setTimeout(() => {
-                    barrier.style.transition = 'opacity 0.1s ease, transform 0.1s ease';
+                    barrier.style.transition = 'opacity 0.2s ease, transform 0.1s ease';
                     barrier.style.opacity = '0';
                     barrier.style.pointerEvents = 'none';
                     stageState.open = true;
