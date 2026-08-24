@@ -2090,8 +2090,12 @@ const STAGES = {
             UI.clearLog();
             UI.log('セクター EX をロード中...');
 
-            // 上部: 本物のヒントSYS_MEMO 1 (LOCKED回転ヒント)
-            UI.log('[SYS_MEMO]: →　←　→');
+            // 最上部: ダミーSYS_MEMO行
+            UI.log('[SYS_MEMO]: システム整合性チェック: PASSED');
+            UI.log('[SYS_MEMO]: メインバス電圧 24.0V 安定');
+
+            // 本物のヒントSYS_MEMO 1 (LOCKED回転ヒント)
+            UI.log('[SYS_MEMO]: ROLL：→　←　→');
 
             // ダミーSYS_MEMO行
             UI.log('[SYS_MEMO]: 補助リアクター同調率 94.2%');
@@ -2100,7 +2104,7 @@ const STAGES = {
             UI.log('[SYS_MEMO]: サブプロセッサ応答待機中');
 
             // 本物のヒントSYS_MEMO 2 (DIPスイッチヒント)
-            UI.log('[SYS_MEMO]: 10110111');
+            UI.log('[SYS_MEMO]: POW：10110111');
 
             // 中間: 世界観・ダミーのSYS_MEMO行
             UI.log('[SYS_MEMO]: 異常電圧検知。フェイルセーフ作動中');
