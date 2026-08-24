@@ -209,8 +209,9 @@
             transform-origin: bottom center; 
             transform: rotate(0deg); 
         }
-        #fukidashi { position: absolute; top: 70px; right: 20px; background: #fff; color: #000; padding: 5px 10px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; letter-spacing: 0.5px; cursor: pointer; user-select: none; z-index: 300; display: none; border: 2px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
-        #fukidashi.cracked { color: #ef4444; border-color: #ef4444; transform: scale(0.9); }
+        #fukidashi { position: absolute; top: 70px; right: 20px; background: #fff; color: #000; padding: 5px 10px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; letter-spacing: 0.5px; cursor: pointer; user-select: none; z-index: 300; display: none; border: 2px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.6); transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease; }
+        #fukidashi.cracked { transform: scale(0.92); animation: shake 0.3s infinite; }
+        .hyphen-blade { display: inline-block; pointer-events: none; }
         #dip-switches { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
@@ -929,7 +930,7 @@ function loadStage(num) {
     stageTransitioning = false; stageState = {};
     UI.clearLog();
     UI.leds.forEach(l => { if(l){ l.style.cursor='default'; l.onpointerdown=null; l.style.backgroundColor=''; l.style.boxShadow=''; } });
-    const sName = num === 11 ? "FINAL-B-" : STAGE_NAMES[num]; UI.sectorDisp.innerHTML = num === 11 ? `SECT<span id="char-o1" class="char-target">O</span>R EX FINAL<span id="drag-blade" class="blade-target">-B-</span>` : `SECT<span id="char-o1" class="char-target">O</span>R ${num.toString().padStart(2, '0')} ${sName}`;
+    const sName = num === 11 ? "FINAL-B-" : STAGE_NAMES[num]; UI.sectorDisp.innerHTML = num === 11 ? `SECT<span id="char-o1" class="char-target">O</span>R EX FINAL<span id="drag-blade" class="blade-target"><span class="hyphen-blade">-</span>B<span class="hyphen-blade">-</span></span>` : `SECT<span id="char-o1" class="char-target">O</span>R ${num.toString().padStart(2, '0')} ${sName}`;
     UI.log(num === 11 ? `セクター EX をロード中...` : `セクター ${num} をロード中...`);
     const l4 = document.getElementById('led-4'); const l5 = document.getElementById('led-5');
     if (num === 11) { if(l4) l4.style.display='block'; if(l5) l5.style.display='block'; }
@@ -2099,27 +2100,29 @@ const STAGES = {
                 }
                 stageState.lastBladePos = { x: p.x, y: p.y };
 
-                // 刃（-B-）の矩形とワイヤー矩形の交差＆なぞり移動量の判定
-                const bRect = blade.getBoundingClientRect();
+                // ハイフン刃先（2箇所）の矩形を取得
+                const hyphens = blade.querySelectorAll('.hyphen-blade');
+                const hRects = Array.from(hyphens).map(h => h.getBoundingClientRect());
+
                 document.querySelectorAll('.cut-wire').forEach(w => {
                     if (!w.classList.contains('cut')) {
                         const wr = w.getBoundingClientRect();
-                        // 刃がワイヤーの領域（少し広めの判定）内に重なっているか
-                        const isOver = (bRect.left < wr.right + 10 && bRect.right > wr.left - 10 &&
-                                        bRect.top < wr.bottom + 10 && bRect.bottom > wr.top - 10);
+                        // ハイフン刃先がワイヤーの領域内にあるか判定
+                        const isOver = hRects.some(hr => 
+                            hr.left < wr.right + 4 && hr.right > wr.left - 4 &&
+                            hr.top < wr.bottom + 4 && hr.bottom > wr.top - 4
+                        );
+
                         if (isOver) {
                             w._strokeDist = (w._strokeDist || 0) + strokeDelta;
-                            // 鉄線の上を35px以上しっかりなぞったら切断！
-                            if (w._strokeDist >= 35) {
+                            // ハイフン刃先でしっかり55px以上なぞったら切断！
+                            if (w._strokeDist >= 55) {
                                 w.classList.add('cut');
                                 AudioSys.sfx.wireCut();
                                 stageState.cuts++;
-                                if (stageState.cuts >= 4) {
-                                    UI.log('鉄線切断完了。');
-                                }
                             }
                         } else {
-                            // 離れたらストローク累積をリセット
+                            // 刃先が外れたらストロークをリセット
                             w._strokeDist = 0;
                         }
                     }
@@ -2154,13 +2157,40 @@ const STAGES = {
             const l3 = UI.leds[2]; l3.style.cursor='pointer';
             const fuki = document.getElementById('fukidashi'); stageState.fCnt = 0;
             
+            const setFukiAppearance = (cnt) => {
+                if (cnt <= 4) {
+                    fuki.style.background = '#ffffff';
+                    fuki.style.borderColor = '#cbd5e1';
+                    fuki.style.color = '#0f172a';
+                    fuki.style.boxShadow = '0 4px 12px rgba(0,0,0,0.6)';
+                    fuki.classList.remove('cracked');
+                } else if (cnt <= 6) {
+                    fuki.style.background = '#fdf2f8';
+                    fuki.style.borderColor = '#f472b6';
+                    fuki.style.color = '#db2777';
+                    fuki.style.boxShadow = '0 0 10px rgba(244,114,182,0.6)';
+                    fuki.classList.remove('cracked');
+                } else if (cnt <= 8) {
+                    fuki.style.background = '#fef2f2';
+                    fuki.style.borderColor = '#ef4444';
+                    fuki.style.color = '#b91c1c';
+                    fuki.style.boxShadow = '0 0 15px rgba(239,68,68,0.7)';
+                    fuki.classList.remove('cracked');
+                } else if (cnt >= 9) {
+                    fuki.style.background = '#450a0a';
+                    fuki.style.borderColor = '#f87171';
+                    fuki.style.color = '#fecaca';
+                    fuki.style.boxShadow = '0 0 20px rgba(239,68,68,0.9)';
+                    fuki.classList.add('cracked');
+                }
+            };
+
             const startFukiTimer = () => {
                 clearTimeout(stageState.fukiTimer);
                 stageState.fukiTimer = setTimeout(() => {
                     fuki.style.display = 'none';
                     stageState.fCnt = 0;
-                    fuki.classList.remove('cracked');
-                    fuki.style.color = '#000';
+                    setFukiAppearance(0);
                 }, 1000);
             };
 
@@ -2168,9 +2198,8 @@ const STAGES = {
                 e.stopPropagation();
                 if (stageState.st[2]) return;
                 fuki.style.display = 'block';
-                fuki.classList.remove('cracked');
-                fuki.style.color = '#000';
                 stageState.fCnt = 0;
+                setFukiAppearance(0);
                 AudioSys.sfx.click();
                 startFukiTimer();
             };
@@ -2182,17 +2211,8 @@ const STAGES = {
                 stageState.fCnt++;
                 AudioSys.sfx.deflect(); // キン！と弾かれる音
 
-                // 1〜4回目までは変化なし、5回目から徐々に変化
-                if (stageState.fCnt <= 4) {
-                    fuki.style.color = '#000';
-                    fuki.classList.remove('cracked');
-                } else if (stageState.fCnt <= 6) {
-                    fuki.style.color = '#f472b6'; // 5〜6回目: 薄ピンク
-                } else if (stageState.fCnt <= 8) {
-                    fuki.style.color = '#ef4444'; // 7〜8回目: 赤
-                } else if (stageState.fCnt >= 9) {
-                    fuki.classList.add('cracked'); // 9回目: ヒビ割れ
-                }
+                // 吹き出し全体の見た目変化（5回目から）
+                setFukiAppearance(stageState.fCnt);
 
                 if (stageState.fCnt >= 10 && !stageState.st[2]) {
                     stageState.st[2] = true;
@@ -2261,13 +2281,12 @@ const STAGES = {
                     if (nearestSnap !== stageState.dLastConfirmedSnap) {
                         const delta = nearestSnap - stageState.dLastConfirmedSnap;
                         stageState.dLastConfirmedSnap = nearestSnap;
-                        AudioSys.sfx.click(); // カチッ！
+                        AudioSys.sfx.click(); // カチッ！（SEは1種類のみ）
 
                         if (stageState.dIdx < stageState.dSeq.length && !stageState.st[4]) {
                             const tgt = stageState.dSeq[stageState.dIdx];
                             if (Math.sign(delta) === Math.sign(tgt)) {
                                 stageState.dIdx++;
-                                AudioSys.sfx.thud();
                                 if (stageState.dIdx >= 3) {
                                     stageState.st[4] = true;
                                     UI.setLED(4, 'green');
