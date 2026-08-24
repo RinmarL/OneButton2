@@ -795,7 +795,12 @@ const AudioSys = {
             setTimeout(() => AudioSys.playOsc('sawtooth', 105, 0.22, 0.1), 120); 
         },
         success() { AudioSys.playOsc('sine', 1046.50, 0.1, 0.1); setTimeout(() => AudioSys.playOsc('sine', 1318.51, 0.15, 0.1), 100); setTimeout(() => AudioSys.playOsc('sine', 1567.98, 0.2, 0.1), 200); },
-        glass() { AudioSys.playNoise(0.2, 0.3, 'spark'); AudioSys.playOsc('square', 2000, 0.1, 0.1); },
+        glass() { 
+            AudioSys.playNoise(0.2, 0.35, 'spark'); 
+            AudioSys.playOsc('triangle', 2600, 0.08, 0.25);
+            setTimeout(() => AudioSys.playOsc('sine', 1900, 0.1, 0.2), 20);
+            setTimeout(() => AudioSys.playOsc('triangle', 3400, 0.05, 0.15), 50);
+        },
         wireCut() { AudioSys.playOsc('sine', 950, 0.03, 0.06); AudioSys.playNoise(0.03, 0.05, 'spark'); },
         dullClick() { AudioSys.playOsc('triangle', 90, 0.05, 0.08); },
         deflect() {
@@ -2036,8 +2041,7 @@ const STAGES = {
             UI.log('セクター EX をロード中...');
 
             // 上部: 本物のヒントSYS_MEMO
-            UI.log('[SYS_MEMO]: 横断歩道は気を付けて渡ること');
-            UI.log('[SYS_MEMO]: 右を見て、左を見て、もう1度右を見て進むこと');
+            UI.log('[SYS_MEMO]: →　←　→');
             UI.log('[SYS_MEMO]: 10110111');
 
             // 中間: 世界観・ダミーのSYS_MEMO行
@@ -2153,9 +2157,11 @@ const STAGES = {
             // LED 2: Hold 2s, HUD release 210-240 (初期状態は非表示)
             document.getElementById('skill-hud').style.display = 'none';
             
-            // LED 3: Fukidashi (対策済み)
+            // LED 3: Fukidashi (対策済み) ➔ 10回叩いて粉砕 ➔ その後LED3タップで点灯
             const l3 = UI.leds[2]; l3.style.cursor='pointer';
-            const fuki = document.getElementById('fukidashi'); stageState.fCnt = 0;
+            const fuki = document.getElementById('fukidashi');
+            stageState.fCnt = 0;
+            stageState.fukiDestroyed = false;
             
             const setFukiAppearance = (cnt) => {
                 if (cnt <= 4) {
@@ -2197,6 +2203,17 @@ const STAGES = {
             l3.onpointerdown = (e) => {
                 e.stopPropagation();
                 if (stageState.st[2]) return;
+
+                // 対策済み吹き出しが粉砕済みの場合：LED 3 が緑点灯！
+                if (stageState.fukiDestroyed) {
+                    stageState.st[2] = true;
+                    UI.setLED(2, 'green');
+                    AudioSys.sfx.thud();
+                    chk();
+                    return;
+                }
+
+                // 未粉砕の場合：対策済みの吹き出しが出現
                 fuki.style.display = 'block';
                 stageState.fCnt = 0;
                 setFukiAppearance(0);
@@ -2206,21 +2223,19 @@ const STAGES = {
 
             fuki.onpointerdown = (e) => {
                 e.stopPropagation();
-                if (stageState.st[2]) return;
+                if (stageState.fukiDestroyed || stageState.st[2]) return;
                 startFukiTimer(); // クリックされるたびに1秒タイマー延長
                 stageState.fCnt++;
-                AudioSys.sfx.deflect(); // キン！と弾かれる音
 
-                // 吹き出し全体の見た目変化（5回目から）
-                setFukiAppearance(stageState.fCnt);
-
-                if (stageState.fCnt >= 10 && !stageState.st[2]) {
-                    stageState.st[2] = true;
-                    UI.setLED(2, 'green');
+                if (stageState.fCnt < 10) {
+                    AudioSys.sfx.deflect(); // 1〜9回目: キン！と弾かれる音
+                    setFukiAppearance(stageState.fCnt);
+                } else {
+                    // 10回目: パリン！と砕け散る
+                    stageState.fukiDestroyed = true;
                     clearTimeout(stageState.fukiTimer);
                     fuki.style.display = 'none';
-                    AudioSys.sfx.thud();
-                    chk();
+                    AudioSys.sfx.glass(); // パリン！
                 }
             };
             
