@@ -1829,7 +1829,7 @@ const STAGES = {
                     AudioSys.sfx.click();
                     setTimeout(() => AudioSys.sfx.buzz(), 100);
                     stageState.systemFailed = true;
-                    UI.log('よくみたらOMENだった... 再起動が必要だ。', 'error');
+                    UI.log('よくみたらOMENだった... 再起動してください。', 'error');
                 };
             }
 
@@ -1918,7 +1918,7 @@ const STAGES = {
                     setTimeout(() => {
                         if (stageState.dispBroken) disp.style.display = 'none';
                     }, 600);
-                    UI.log('部品が外れた...再起動が必要だ。', 'error');
+                    UI.log('部品が外れた...再起動してください。', 'error');
                     return;
                 }
 
