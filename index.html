@@ -1092,7 +1092,7 @@ btn.addEventListener('pointermove', handlers.move);
 document.addEventListener('pointermove', handlers.winMove);
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-// ログエリアの確実なタッチ・スワイプスクロール対応（スマホ・PC両対応）
+// ログエリアの確実なタッチ・スワイプスクロール対応（全セクター共通・スマホ＆PC両対応）
 const logWrapperEl = document.getElementById('log-wrapper');
 if (logWrapperEl) {
     let isLogDragging = false;
@@ -1100,6 +1100,7 @@ if (logWrapperEl) {
     let logStartScroll = 0;
 
     logWrapperEl.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('.log-num-drag')) return;
         isLogDragging = true;
         logStartY = getEventPos(e).y;
         logStartScroll = logWrapperEl.scrollTop;
