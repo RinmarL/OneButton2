@@ -433,25 +433,23 @@
             box-shadow: none;
         }
 
-        /* EX: DRAGGABLE BLADE (-B-) */
+        /* EX: DRAGGABLE BLADE (-B-) - タイトルと同化させて隠し要素に */
         #drag-blade {
-            display: inline-block;
+            display: inline;
             cursor: grab;
             user-select: none;
             touch-action: none;
-            color: var(--core-cyan);
-            font-weight: 900;
-            letter-spacing: 2px;
-            padding: 0 2px;
-            border-radius: 4px;
+            color: inherit;
+            font: inherit;
+            letter-spacing: inherit;
+            text-shadow: inherit;
             position: relative;
             z-index: 500;
-            transition: color 0.15s ease, filter 0.15s ease;
         }
         #drag-blade:hover {
-            color: #ffffff;
-            text-shadow: 0 0 10px #ffffff, 0 0 20px var(--core-cyan);
-            filter: drop-shadow(0 0 8px #00f0ff);
+            color: inherit;
+            text-shadow: inherit;
+            filter: none;
         }
         #drag-blade.blade-active {
             position: fixed !important;
@@ -2073,6 +2071,7 @@ const STAGES = {
             });
 
             const blade = document.getElementById('drag-blade');
+            stageState.lastBladePos = null;
             if (blade) {
                 stageState.bladeDragging = false;
                 blade.onpointerdown = (e) => {
@@ -2081,6 +2080,7 @@ const STAGES = {
                     stageState.bladeDragging = true;
                     blade.classList.add('blade-active');
                     const p = getEventPos(e);
+                    stageState.lastBladePos = { x: p.x, y: p.y };
                     blade.style.left = p.x + 'px';
                     blade.style.top = p.y + 'px';
                     AudioSys.sfx.click();
@@ -2093,19 +2093,34 @@ const STAGES = {
                 blade.style.left = p.x + 'px';
                 blade.style.top = p.y + 'px';
 
-                // 刃（-B-）の矩形とワイヤー矩形の交差判定
+                let strokeDelta = 0;
+                if (stageState.lastBladePos) {
+                    strokeDelta = Math.hypot(p.x - stageState.lastBladePos.x, p.y - stageState.lastBladePos.y);
+                }
+                stageState.lastBladePos = { x: p.x, y: p.y };
+
+                // 刃（-B-）の矩形とワイヤー矩形の交差＆なぞり移動量の判定
                 const bRect = blade.getBoundingClientRect();
                 document.querySelectorAll('.cut-wire').forEach(w => {
                     if (!w.classList.contains('cut')) {
                         const wr = w.getBoundingClientRect();
-                        if (bRect.left < wr.right && bRect.right > wr.left &&
-                            bRect.top < wr.bottom && bRect.bottom > wr.top) {
-                            w.classList.add('cut');
-                            AudioSys.sfx.wireCut();
-                            stageState.cuts++;
-                            if (stageState.cuts >= 4) {
-                                UI.log('鉄線切断完了。');
+                        // 刃がワイヤーの領域（少し広めの判定）内に重なっているか
+                        const isOver = (bRect.left < wr.right + 10 && bRect.right > wr.left - 10 &&
+                                        bRect.top < wr.bottom + 10 && bRect.bottom > wr.top - 10);
+                        if (isOver) {
+                            w._strokeDist = (w._strokeDist || 0) + strokeDelta;
+                            // 鉄線の上を35px以上しっかりなぞったら切断！
+                            if (w._strokeDist >= 35) {
+                                w.classList.add('cut');
+                                AudioSys.sfx.wireCut();
+                                stageState.cuts++;
+                                if (stageState.cuts >= 4) {
+                                    UI.log('鉄線切断完了。');
+                                }
                             }
+                        } else {
+                            // 離れたらストローク累積をリセット
+                            w._strokeDist = 0;
                         }
                     }
                 });
@@ -2114,9 +2129,11 @@ const STAGES = {
             stageState.onBladeUp = () => {
                 if (!stageState.bladeDragging || !blade) return;
                 stageState.bladeDragging = false;
+                stageState.lastBladePos = null;
                 blade.classList.remove('blade-active');
                 blade.style.left = '';
                 blade.style.top = '';
+                document.querySelectorAll('.cut-wire').forEach(w => { w._strokeDist = 0; });
             };
 
             document.addEventListener('pointermove', stageState.onBladeMove);
@@ -2164,14 +2181,24 @@ const STAGES = {
                 startFukiTimer(); // クリックされるたびに1秒タイマー延長
                 stageState.fCnt++;
                 AudioSys.sfx.deflect(); // キン！と弾かれる音
-                if(stageState.fCnt>3) fuki.style.color='#f472b6';
-                if(stageState.fCnt>6) fuki.style.color='#ef4444';
-                if(stageState.fCnt>8) fuki.classList.add('cracked');
-                if(stageState.fCnt>=10 && !stageState.st[2]) {
-                    stageState.st[2]=true;
+
+                // 1〜4回目までは変化なし、5回目から徐々に変化
+                if (stageState.fCnt <= 4) {
+                    fuki.style.color = '#000';
+                    fuki.classList.remove('cracked');
+                } else if (stageState.fCnt <= 6) {
+                    fuki.style.color = '#f472b6'; // 5〜6回目: 薄ピンク
+                } else if (stageState.fCnt <= 8) {
+                    fuki.style.color = '#ef4444'; // 7〜8回目: 赤
+                } else if (stageState.fCnt >= 9) {
+                    fuki.classList.add('cracked'); // 9回目: ヒビ割れ
+                }
+
+                if (stageState.fCnt >= 10 && !stageState.st[2]) {
+                    stageState.st[2] = true;
                     UI.setLED(2, 'green');
                     clearTimeout(stageState.fukiTimer);
-                    fuki.style.display='none';
+                    fuki.style.display = 'none';
                     AudioSys.sfx.thud();
                     chk();
                 }
