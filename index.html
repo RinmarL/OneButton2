@@ -12,7 +12,7 @@
             --led-green: #10b981; --led-orange: #f97316; --led-red: #ef4444; --led-off: #0f172a;
         }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none !important; -webkit-user-select: none !important; -webkit-touch-callout: none !important; -webkit-tap-highlight-color: transparent !important; outline: none !important; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none !important; -webkit-user-select: none !important; -webkit-touch-callout: none !important; -webkit-tap-highlight-color: transparent !important; outline: none !important; cursor: default !important; }
         body, html { width: 100%; height: 100%; background-color: var(--bg-color); color: #d4d4d8; font-family: 'Courier New', Consolas, monospace; overflow: hidden; touch-action: none; }
         .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 3px); pointer-events: none; z-index: 9999; }
         .vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.9) 120%); pointer-events: none; z-index: 9998; }
@@ -164,7 +164,7 @@
             z-index: 25; 
             pointer-events: auto; 
             display: none; 
-            transition: opacity 0.2s ease, transform 0.1s ease;
+            transition: opacity 0.1s ease, transform 0.1s ease;
         }
         #barrier.impact {
             background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(0, 240, 255, 0.4) 60%, rgba(0, 240, 255, 0.8) 100%);
@@ -1211,7 +1211,7 @@ function loadStage(num) {
     }, 2000);
 }
 
-const STAGE_NAMES = { 1:'CONTACT2', 2:'BALANCE', 3:'JUST', 4:'FLICKS', 5:'NUM', 6:'SWIPE', 7:'CODE', 8:'REBOOT', 9:'HISTORY', 10:'WIRE', 11:'FINAL-B-' };
+const STAGE_NAMES = { 1:'CONTACT2', 2:'BALANCE', 3:'JUST', 4:'FLICKS', 5:'SUM', 6:'SWIPE', 7:'CODE', 8:'REBOOT', 9:'HISTORY', 10:'WIRE', 11:'FINAL-B-' };
 
 const STAGES = {
     // 01: CONTACT2 (Double Tap <= 250ms)
@@ -2009,9 +2009,9 @@ const STAGES = {
                 overlay.style.transition = 'opacity 1.5s linear';
                 overlay.style.opacity = '1';
 
-                // 1.0秒後（暗転完了の残り0.5秒）に0.2秒かけて滑らかにバリアが解ける！
+                // 1.0秒後（暗転完了の残り0.5秒）に0.1秒かけて滑らかにバリアが解ける！
                 stageState.barrierDropTimer = setTimeout(() => {
-                    barrier.style.transition = 'opacity 0.2s ease, transform 0.1s ease';
+                    barrier.style.transition = 'opacity 0.1s ease, transform 0.1s ease';
                     barrier.style.opacity = '0';
                     barrier.style.pointerEvents = 'none';
                     stageState.open = true;
