@@ -2944,6 +2944,7 @@ const STAGES = {
             stageState.dragD = false;
 
             disp.onpointerdown = (e) => {
+                if (stageState.st[4]) return; // LED 5 解除後は操作不可！
                 const r = disp.getBoundingClientRect();
                 stageState.dcx = r.left + r.width / 2;
                 stageState.dcy = r.top + r.height / 2;
@@ -2954,7 +2955,7 @@ const STAGES = {
             };
 
             stageState.upD = () => {
-                if (!stageState.dragD) return;
+                if (!stageState.dragD || stageState.st[4]) return;
                 stageState.dragD = false;
                 // 手を離した時に最も近い360度へカチッとスナップ
                 const nearestSnap = Math.round(stageState.dCurAngle / 360) * 360;
@@ -2964,7 +2965,7 @@ const STAGES = {
             };
 
             stageState.moveD = (e) => {
-                if (!stageState.dragD) return;
+                if (!stageState.dragD || stageState.st[4]) return;
                 const p = getEventPos(e);
                 const a = Math.atan2(p.y - stageState.dcy, p.x - stageState.dcx);
                 let da = a - stageState.lAng;
@@ -2994,8 +2995,13 @@ const STAGES = {
                                 stageState.dIdx++;
                                 if (stageState.dIdx >= 3) {
                                     stageState.st[4] = true;
+                                    stageState.dragD = false;
                                     UI.setLED(4, 'green');
+                                    AudioSys.sfx.thud();
+                                    disp.style.transition = 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                                    disp.style.transform = `rotate(${nearestSnap}deg)`;
                                     chk();
+                                    return;
                                 }
                             } else {
                                 // 逆回転時はシーケンスリセット
