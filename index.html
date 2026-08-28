@@ -17,13 +17,31 @@
         .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 3px); pointer-events: none; z-index: 9999; }
         .vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.9) 120%); pointer-events: none; z-index: 9998; }
         #game-container { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 20px; max-width: 600px; margin: 0 auto; position: relative; }
-        #header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--metal-base); padding-bottom: 10px; margin-bottom: 30px; text-shadow: 0 0 5px rgba(255,255,255,0.5); z-index: 100; }
-        .sector-info { font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; }
-        .status-leds { display: flex; gap: 10px; position: relative; z-index: 200;}
-        .led { width: 15px; height: 15px; border-radius: 50%; background-color: var(--led-off); box-shadow: inset 0 2px 4px rgba(0,0,0,0.8); border: 2px solid #000; }
+        #header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--metal-base); padding-bottom: 10px; margin-bottom: 30px; text-shadow: 0 0 5px rgba(255,255,255,0.5); z-index: 100; gap: 8px; }
+        .sector-info { 
+            font-size: clamp(1.05rem, 4.4vw, 1.45rem); 
+            font-weight: bold; 
+            letter-spacing: clamp(1px, 0.4vw, 2px); 
+            white-space: nowrap; 
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .status-leds { display: flex; gap: 8px; position: relative; z-index: 200; flex-shrink: 0; }
+        .led { width: 15px; height: 15px; border-radius: 50%; background-color: var(--led-off); box-shadow: inset 0 2px 4px rgba(0,0,0,0.8); border: 2px solid #000; flex-shrink: 0; }
         .led.active-green { background-color: var(--led-green); box-shadow: 0 0 10px var(--led-green); }
         .led.active-orange { background-color: var(--led-orange); box-shadow: 0 0 10px var(--led-orange); }
         .led.active-red { background-color: var(--led-red); box-shadow: 0 0 10px var(--led-red); }
+
+        @media (max-width: 480px) {
+            #game-container { padding: 14px 16px; }
+            #header { padding-bottom: 8px; margin-bottom: 22px; gap: 6px; }
+            .sector-info { font-size: clamp(0.95rem, 4.2vw, 1.25rem); letter-spacing: 1px; }
+            .status-leds { gap: 6px; }
+            .led { width: 13px; height: 13px; }
+        }
+        @media (max-width: 360px) {
+            .sector-info { font-size: 0.9rem; letter-spacing: 0.5px; }
+        }
         #button-area { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; perspective: 1000px; }
 
         /* 02: BALANCE */
