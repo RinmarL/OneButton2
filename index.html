@@ -1824,6 +1824,8 @@ const STAGES = {
                 stageState.dispX = 0;
                 stageState.dispY = 0;
                 stageState.dragDisp = false;
+                stageState.bladeStrokeDist = 0;
+                stageState.bladeLastPos = null;
 
                 disp.onpointerdown = (e) => {
                     e.stopPropagation();
@@ -1831,14 +1833,17 @@ const STAGES = {
                     stageState.isSlicing = false; // スライスを即座にキャンセル
                     stageState.strokeDist = 0;
                     stageState.lastSlicePos = null;
+                    stageState.bladeStrokeDist = 0;
                     const p = getEventPos(e);
                     stageState.dispStartX = p.x - stageState.dispX;
                     stageState.dispStartY = p.y - stageState.dispY;
+                    const r = disp.getBoundingClientRect();
+                    stageState.bladeLastPos = { x: r.left, y: r.top };
                 };
             }
 
-            // 背面の強化ワイヤー（4本）をLOCKEDの左上角で切断する判定（フレーム裏面表示時のみ）
-            const checkHeavyWireCut = (bladeX, bladeY) => {
+            // 背面の強化ワイヤー（4本）をLOCKEDの左上角で切断する判定（フレーム裏面表示時＆一定ストローク移動時のみ）
+            const checkHeavyWireCut = (x1, y1, x2, y2) => {
                 if (stageState.heavyCuts >= 4) return;
 
                 // 表の鉄線4本が切れており、かつフレームが裏返されている（裏面を向いている）時のみ切断可能！
@@ -1851,9 +1856,21 @@ const STAGES = {
                 heavyWires.forEach(hw => {
                     if (!hw.classList.contains('cut')) {
                         const wr = hw.getBoundingClientRect();
-                        // 左上の角（bladeX, bladeY）がワイヤーの領域と接触・通過したか判定
-                        if (bladeX >= wr.left - 15 && bladeX <= wr.right + 15 &&
-                            bladeY >= wr.top - 15 && bladeY <= wr.bottom + 15) {
+                        // 直前の点から現在の点への線分補間チェック（すり抜け防止）
+                        const steps = Math.max(1, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / 6));
+                        let hit = false;
+                        for (let s = 0; s <= steps; s++) {
+                            const t = s / steps;
+                            const px = x1 + (x2 - x1) * t;
+                            const py = y1 + (y2 - y1) * t;
+                            if (px >= wr.left - 12 && px <= wr.right + 12 &&
+                                py >= wr.top - 12 && py <= wr.bottom + 12) {
+                                hit = true;
+                                break;
+                            }
+                        }
+
+                        if (hit) {
                             hw.classList.add('cut');
                             AudioSys.sfx.wireCut();
                             stageState.heavyCuts++;
@@ -1877,17 +1894,33 @@ const STAGES = {
                 stageState.dispY = p.y - stageState.dispStartY;
                 disp.style.transform = `translate(${stageState.dispX}px, ${stageState.dispY}px)`;
 
-                // LOCKEDパネルの左上角の座標
+                // LOCKEDパネルの左上角の現在座標
                 const r = disp.getBoundingClientRect();
                 const bladeX = r.left;
                 const bladeY = r.top;
 
-                // 背面の強化ワイヤー切断チェック（LOCKEDの角は背面の鉄線にのみ効果あり）
-                checkHeavyWireCut(bladeX, bladeY);
+                let prevX = bladeX;
+                let prevY = bladeY;
+                if (stageState.bladeLastPos) {
+                    prevX = stageState.bladeLastPos.x;
+                    prevY = stageState.bladeLastPos.y;
+                    const d = Math.hypot(bladeX - prevX, bladeY - prevY);
+                    stageState.bladeStrokeDist = (stageState.bladeStrokeDist || 0) + d;
+                    stageState.bladeLastPos = { x: bladeX, y: bladeY };
+                } else {
+                    stageState.bladeLastPos = { x: bladeX, y: bladeY };
+                }
+
+                // 表の鉄線と同じく、移動ストロークが25px以上ある場合のみ切断（静止接触・ちょん押し防止）
+                if (stageState.bladeStrokeDist >= 25) {
+                    checkHeavyWireCut(prevX, prevY, bladeX, bladeY);
+                }
             };
 
             stageState.onDispUp = () => {
                 stageState.dragDisp = false;
+                stageState.bladeStrokeDist = 0;
+                stageState.bladeLastPos = null;
             };
 
             document.addEventListener('pointermove', stageState.onDispMove);
