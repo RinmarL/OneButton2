@@ -1819,9 +1819,17 @@ const STAGES = {
                 };
             }
 
-            // 背面の強化ワイヤー（4本）をLOCKEDの左上角で切断する判定
+            // 背面の強化ワイヤー（4本）をLOCKEDの左上角で切断する判定（フレーム裏面表示時のみ）
             const checkHeavyWireCut = (bladeX, bladeY) => {
                 if (stageState.heavyCuts >= 4) return;
+
+                // 表の鉄線4本が切れており、かつフレームが裏返されている（裏面を向いている）時のみ切断可能！
+                if (stageState.cuts < 4) return;
+                const currentRot = stageState.curRot !== undefined ? stageState.curRot : (stageState.rot || 0);
+                const norm = ((currentRot % 360) + 360) % 360;
+                const isBackFacing = (norm >= 80 && norm <= 280);
+                if (!isBackFacing) return;
+
                 heavyWires.forEach(hw => {
                     if (!hw.classList.contains('cut')) {
                         const wr = hw.getBoundingClientRect();
