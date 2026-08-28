@@ -565,6 +565,21 @@
         }
         #digital-display.blade-corner .display-front {
             border-radius: 0px 8px 8px 8px !important;
+            overflow: visible !important;
+        }
+        /* 左上カドをほんの少し（2px程度）鋭利に尖らせる */
+        #digital-display.blade-corner .display-front::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            width: 5px;
+            height: 5px;
+            background: #111;
+            border-top: 2px solid #333;
+            border-left: 2px solid #333;
+            pointer-events: none;
+            z-index: 5;
         }
 
         #stage6-back-container {
