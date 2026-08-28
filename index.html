@@ -2242,8 +2242,8 @@ const STAGES = {
                 stageState.totalDAng = (stageState.totalDAng || 0) + Math.abs(degDelta);
                 stageState.lAng = a;
 
-                // 5回転（1800度）に達したら外れて落下！
-                if (stageState.totalDAng >= 1800) {
+                // どちらの方向でも3回転（1080度）に達したら外れて落下！
+                if (stageState.totalDAng >= 1080) {
                     stageState.dispBroken = true;
                     stageState.dragDisp = false;
                     stageState.systemFailed = true;
