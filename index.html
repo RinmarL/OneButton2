@@ -581,8 +581,8 @@
             margin: 0 1px;
             background: transparent;
             border: none;
-            color: var(--led-green);
-            text-shadow: 0 0 3px var(--led-green);
+            color: var(--core-cyan);
+            text-shadow: 0 0 4px var(--core-cyan);
             font-weight: bold;
             font-family: inherit;
             cursor: grab;
@@ -592,7 +592,7 @@
         }
         .log-num-drag:hover {
             transform: scale(1.25);
-            text-shadow: 0 0 8px var(--led-green);
+            text-shadow: 0 0 8px var(--core-cyan);
         }
         .log-num-drag.used {
             opacity: 0.25;
@@ -1452,6 +1452,7 @@ const STAGES = {
             document.getElementById('btn-text').textContent = 'PUSH';
             stageState.sum = 0;
             stageState.dragging = null;
+            stageState.errorLogged = false;
             document.getElementById('chip-container').style.display = 'none';
 
             // ログエリアにドラッグ可能な数字要素を出力
@@ -1522,7 +1523,10 @@ const STAGES = {
                 completeStage();
             } else {
                 AudioSys.sfx.buzz();
-                UI.log('エラー: 不正な値です (リセット)');
+                if (!stageState.errorLogged) {
+                    UI.log('エラー: 不正な値です (リセット)');
+                    stageState.errorLogged = true;
+                }
                 stageState.sum = 0;
                 // 既存の数字ボタンのused状態を解除して元に戻す（増殖防止）
                 if (stageState.logEntry) {
