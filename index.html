@@ -538,26 +538,15 @@
             border: 1px solid #38bdf8;
             color: #031326;
             text-shadow: 0 0 4px rgba(255,255,255,0.6);
+            box-shadow: 0 0 16px rgba(0, 240, 255, 0.8), inset 0 1px 2px rgba(255,255,255,0.9);
+        }
         /* 06: SLASH - SHARP LOCKED DISPLAY BLADE & BACK COVER WITH HEAVY WIRES */
         #digital-display.blade-corner {
-            border-top-left-radius: 0px !important;
+            border-radius: 0px 8px 8px 8px !important;
             touch-action: none;
         }
         #digital-display.blade-corner .display-front {
-            border-top-left-radius: 0px !important;
-        }
-        #digital-display.blade-corner::before {
-            content: '';
-            position: absolute;
-            top: -3px;
-            left: -3px;
-            width: 22px;
-            height: 22px;
-            border-top: 3px solid #ffffff;
-            border-left: 3px solid #ffffff;
-            box-shadow: -2px -2px 8px rgba(255, 255, 255, 0.9), 0 0 12px var(--core-cyan);
-            pointer-events: none;
-            z-index: 25;
+            border-radius: 0px 8px 8px 8px !important;
         }
 
         #stage6-back-container {
