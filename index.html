@@ -1842,10 +1842,8 @@ const STAGES = {
                 const bladeX = r.left;
                 const bladeY = r.top;
 
-                // 背面の強化ワイヤー切断チェック
+                // 背面の強化ワイヤー切断チェック（LOCKEDの角は背面の鉄線にのみ効果あり）
                 checkHeavyWireCut(bladeX, bladeY);
-                // （表のワイヤーもLOCKED角で切れる）
-                checkWireSlice(bladeX, bladeY);
             };
 
             stageState.onDispUp = () => {
