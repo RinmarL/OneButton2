@@ -1308,6 +1308,8 @@ function loadStage(num) {
     document.getElementById('back-switch').className = 'switch-off';
     const vKnob = document.getElementById('v-switch-knob');
     if (vKnob) vKnob.textContent = 'OFF';
+    const backCont6 = document.getElementById('stage6-back-container');
+    if (backCont6) backCont6.style.display = 'none';
     document.getElementById('dip-switches').style.display = 'none';
     const dummyCont = document.getElementById('dummy-back-container');
     if (dummyCont) dummyCont.style.display = 'none';
@@ -1693,6 +1695,14 @@ const STAGES = {
             
             const backCont = document.getElementById('stage6-back-container');
             if (backCont) backCont.style.display = 'flex';
+
+            const bSw = document.getElementById('back-switch');
+            if (bSw) {
+                bSw.style.display = 'flex';
+                bSw.className = 'switch-off'; 
+            }
+            const knob = document.getElementById('v-switch-knob');
+            if (knob) knob.textContent = 'OFF';
             
             const backCover = document.getElementById('stage6-back-cover');
             if (backCover) {
@@ -1712,11 +1722,6 @@ const STAGES = {
                     }
                 };
             });
-
-            const bSw = document.getElementById('back-switch');
-            if (bSw) bSw.className = 'switch-off'; 
-            const knob = document.getElementById('v-switch-knob');
-            if (knob) knob.textContent = 'OFF';
 
             stageState.cuts = 0; // 表のワイヤー（4本）
             stageState.heavyCuts = 0; // 背面の強化ワイヤー（4本）
@@ -1749,6 +1754,7 @@ const STAGES = {
             };
 
             stageState.onSliceDown = (e) => {
+                if (stageState.dragDisp || e.target.closest('#digital-display')) return;
                 const p = getEventPos(e);
                 stageState.isSlicing = true;
                 stageState.strokeDist = 0;
@@ -1756,6 +1762,11 @@ const STAGES = {
             };
 
             stageState.onSliceMove = (e) => {
+                // LOCKEDを掴んでいる間は表のワイヤーは絶対に切断させない！
+                if (stageState.dragDisp) {
+                    stageState.isSlicing = false;
+                    return;
+                }
                 const isMouseDown = (e.pointerType === 'mouse' && e.buttons === 1);
                 const isTouchMove = (e.pointerType !== 'mouse' && stageState.isSlicing);
                 
@@ -1799,6 +1810,9 @@ const STAGES = {
                 disp.onpointerdown = (e) => {
                     e.stopPropagation();
                     stageState.dragDisp = true;
+                    stageState.isSlicing = false; // スライスを即座にキャンセル
+                    stageState.strokeDist = 0;
+                    stageState.lastSlicePos = null;
                     const p = getEventPos(e);
                     stageState.dispStartX = p.x - stageState.dispX;
                     stageState.dispStartY = p.y - stageState.dispY;
