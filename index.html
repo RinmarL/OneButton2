@@ -538,7 +538,146 @@
             border: 1px solid #38bdf8;
             color: #031326;
             text-shadow: 0 0 4px rgba(255,255,255,0.6);
-            box-shadow: 0 0 16px rgba(0, 240, 255, 0.8), inset 0 1px 2px rgba(255,255,255,0.9);
+        /* 06: SLASH - SHARP LOCKED DISPLAY BLADE & BACK COVER WITH HEAVY WIRES */
+        #digital-display.blade-corner {
+            border-top-left-radius: 0px !important;
+            touch-action: none;
+        }
+        #digital-display.blade-corner .display-front {
+            border-top-left-radius: 0px !important;
+        }
+        #digital-display.blade-corner::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            width: 22px;
+            height: 22px;
+            border-top: 3px solid #ffffff;
+            border-left: 3px solid #ffffff;
+            box-shadow: -2px -2px 8px rgba(255, 255, 255, 0.9), 0 0 12px var(--core-cyan);
+            pointer-events: none;
+            z-index: 25;
+        }
+
+        #stage6-back-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #stage6-back-cover {
+            position: absolute;
+            top: 14px;
+            left: 26px;
+            width: 88px;
+            height: 112px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #64748b;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.2);
+            z-index: 35;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.5s cubic-bezier(0.5, 0, 1, 1), opacity 0.4s ease;
+            pointer-events: none;
+        }
+        .stage6-cover-hazard {
+            width: 68px;
+            height: 12px;
+            background: repeating-linear-gradient(45deg, #000, #000 6px, var(--warning-yellow) 6px, var(--warning-yellow) 12px);
+            border-radius: 2px;
+            margin-bottom: 8px;
+            border: 1px solid #334155;
+        }
+        .stage6-cover-text {
+            font-size: 0.65rem;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            color: #94a3b8;
+            text-shadow: 0 1px 2px #000;
+        }
+
+        #stage6-wires-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 40;
+        }
+        .stage6-heavy-wire {
+            position: absolute;
+            background: linear-gradient(180deg, #f59e0b 0%, #b45309 40%, #78350f 80%, #451a03 100%);
+            border: 1.5px solid #292524;
+            border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.6);
+            pointer-events: auto;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .stage6-heavy-wire::before, .stage6-heavy-wire::after {
+            content: '';
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            background: radial-gradient(circle, #f8fafc, #71717a);
+            border-radius: 50%;
+            border: 1px solid #18181b;
+            box-shadow: 0 1px 2px #000;
+        }
+        /* 上下の横ワイヤー (幅80px, 高さ12px) */
+        .stage6-heavy-wire.hw-top {
+            top: 8px;
+            left: 30px;
+            width: 80px;
+            height: 12px;
+        }
+        .stage6-heavy-wire.hw-top::before { left: 4px; top: 1px; }
+        .stage6-heavy-wire.hw-top::after { right: 4px; top: 1px; }
+
+        .stage6-heavy-wire.hw-bottom {
+            bottom: 8px;
+            left: 30px;
+            width: 80px;
+            height: 12px;
+        }
+        .stage6-heavy-wire.hw-bottom::before { left: 4px; top: 1px; }
+        .stage6-heavy-wire.hw-bottom::after { right: 4px; top: 1px; }
+
+        /* 左右の縦ワイヤー (幅12px, 高さ90px) */
+        .stage6-heavy-wire.hw-left {
+            top: 25px;
+            left: 14px;
+            width: 12px;
+            height: 90px;
+            background: linear-gradient(90deg, #f59e0b 0%, #b45309 40%, #78350f 80%, #451a03 100%);
+        }
+        .stage6-heavy-wire.hw-left::before { top: 4px; left: 1px; }
+        .stage6-heavy-wire.hw-left::after { bottom: 4px; left: 1px; }
+
+        .stage6-heavy-wire.hw-right {
+            top: 25px;
+            right: 14px;
+            width: 12px;
+            height: 90px;
+            background: linear-gradient(90deg, #f59e0b 0%, #b45309 40%, #78350f 80%, #451a03 100%);
+        }
+        .stage6-heavy-wire.hw-right::before { top: 4px; left: 1px; }
+        .stage6-heavy-wire.hw-right::after { bottom: 4px; left: 1px; }
+
+        .stage6-heavy-wire.cut {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            pointer-events: none;
+        }
+        .stage6-heavy-wire.cut::before, .stage6-heavy-wire.cut::after {
+            display: none !important;
         }
 
         /* 05: CHIPS */
@@ -872,9 +1011,21 @@
                             <div class="back-sheet-thread bt-315" data-idx="7"></div>
                         </div>
                     </div>
-                    <div id="back-switch" class="switch-off" style="display:none;">
-                        <div class="v-switch-track">
-                            <div class="v-switch-knob" id="v-switch-knob">OFF</div>
+                    <div id="stage6-back-container" style="display:none;">
+                        <div id="back-switch" class="switch-off">
+                            <div class="v-switch-track">
+                                <div class="v-switch-knob" id="v-switch-knob">OFF</div>
+                            </div>
+                        </div>
+                        <div id="stage6-back-cover">
+                            <div class="stage6-cover-hazard"></div>
+                            <span class="stage6-cover-text">PROTECTED</span>
+                        </div>
+                        <div id="stage6-wires-container">
+                            <div class="stage6-heavy-wire hw-top" data-idx="0"></div>
+                            <div class="stage6-heavy-wire hw-right" data-idx="1"></div>
+                            <div class="stage6-heavy-wire hw-bottom" data-idx="2"></div>
+                            <div class="stage6-heavy-wire hw-left" data-idx="3"></div>
                         </div>
                     </div>
                     <div id="dip-switches" style="display:none;">
@@ -1211,7 +1362,7 @@ function loadStage(num) {
     }, 2000);
 }
 
-const STAGE_NAMES = { 1:'CONTACT2', 2:'BALANCE', 3:'JUST', 4:'FLICKS', 5:'SUM', 6:'SWIPE', 7:'CODE', 8:'REBOOT', 9:'HISTORY', 10:'WIRE', 11:'FINAL-B-' };
+const STAGE_NAMES = { 1:'CONTACT2', 2:'BALANCE', 3:'JUST', 4:'FLICKS', 5:'SUM', 6:'SLASH', 7:'CODE', 8:'REBOOT', 9:'HISTORY', 10:'WIRE', 11:'FINAL-B-' };
 
 const STAGES = {
     // 01: CONTACT2 (Double Tap <= 250ms)
@@ -1545,16 +1696,41 @@ const STAGES = {
             if (stageState.dragEl) { stageState.dragEl.remove(); }
         }
     },
-    // 06: SWIPE (Cut 4 wires by swiping, flip, switch ON)
+    // 06: SLASH (LOCKED blade sharp corner cuts 4 heavy back wires, remove cover, switch ON)
     6: {
         init() {
             UI.btn.classList.add('disabled'); 
             document.getElementById('wires-container').style.display = 'block';
-            document.getElementById('back-switch').style.display = 'flex'; 
-            document.getElementById('back-switch').className = 'switch-off'; 
+            
+            const backCont = document.getElementById('stage6-back-container');
+            if (backCont) backCont.style.display = 'flex';
+            
+            const backCover = document.getElementById('stage6-back-cover');
+            if (backCover) {
+                backCover.style.display = 'flex';
+                backCover.style.transform = '';
+                backCover.style.opacity = '1';
+            }
+
+            const heavyWires = document.querySelectorAll('.stage6-heavy-wire');
+            heavyWires.forEach(w => {
+                w.classList.remove('cut');
+                // 指で直接触った時は切れない（キンッ音）
+                w.onpointerdown = (e) => {
+                    e.stopPropagation();
+                    if (!w.classList.contains('cut')) {
+                        AudioSys.sfx.deflect();
+                    }
+                };
+            });
+
+            const bSw = document.getElementById('back-switch');
+            if (bSw) bSw.className = 'switch-off'; 
             const knob = document.getElementById('v-switch-knob');
             if (knob) knob.textContent = 'OFF';
-            stageState.cuts = 0; 
+
+            stageState.cuts = 0; // 表のワイヤー（4本）
+            stageState.heavyCuts = 0; // 背面の強化ワイヤー（4本）
             stageState.power = false; 
             stageState.rot = 0; 
             stageState.dragF = false;
@@ -1562,13 +1738,14 @@ const STAGES = {
             stageState.strokeDist = 0;
             stageState.lastSlicePos = null;
 
+            // 表ワイヤーのリセット
             document.querySelectorAll('.cut-wire').forEach(w => {
                 w.classList.remove('cut');
                 w.onpointerdown = null;
                 w.onpointerenter = null;
             });
 
-            // ワイヤー切断判定
+            // 表ワイヤーのスライス切断判定
             const checkWireSlice = (cx, cy) => {
                 document.querySelectorAll('.cut-wire').forEach(w => {
                     if (!w.classList.contains('cut')) {
@@ -1590,8 +1767,6 @@ const STAGES = {
             };
 
             stageState.onSliceMove = (e) => {
-                // PCマウス: 左クリック(buttons === 1)押下中であること
-                // スマホ: タッチドラッグ(isSlicing === true)であること
                 const isMouseDown = (e.pointerType === 'mouse' && e.buttons === 1);
                 const isTouchMove = (e.pointerType !== 'mouse' && stageState.isSlicing);
                 
@@ -1622,54 +1797,131 @@ const STAGES = {
             document.addEventListener('pointermove', stageState.onSliceMove);
             document.addEventListener('pointerup', stageState.onSliceUp);
 
-            const bSw = document.getElementById('back-switch');
+            // LOCKEDパネルの自由ドラッグ ＆ 左上角による背面の強化ワイヤー切断
+            const disp = document.getElementById('digital-display');
+            if (disp) {
+                disp.classList.add('blade-corner');
+                disp.style.transition = 'none';
+                disp.style.transform = 'translate(0px, 0px)';
+                stageState.dispX = 0;
+                stageState.dispY = 0;
+                stageState.dragDisp = false;
+
+                disp.onpointerdown = (e) => {
+                    e.stopPropagation();
+                    stageState.dragDisp = true;
+                    const p = getEventPos(e);
+                    stageState.dispStartX = p.x - stageState.dispX;
+                    stageState.dispStartY = p.y - stageState.dispY;
+                };
+            }
+
+            // 背面の強化ワイヤー（4本）をLOCKEDの左上角で切断する判定
+            const checkHeavyWireCut = (bladeX, bladeY) => {
+                if (stageState.heavyCuts >= 4) return;
+                heavyWires.forEach(hw => {
+                    if (!hw.classList.contains('cut')) {
+                        const wr = hw.getBoundingClientRect();
+                        // 左上の角（bladeX, bladeY）がワイヤーの領域と接触・通過したか判定
+                        if (bladeX >= wr.left - 15 && bladeX <= wr.right + 15 &&
+                            bladeY >= wr.top - 15 && bladeY <= wr.bottom + 15) {
+                            hw.classList.add('cut');
+                            AudioSys.sfx.wireCut();
+                            stageState.heavyCuts++;
+
+                            // 4本すべて切断で保護カバーが外れる！
+                            if (stageState.heavyCuts >= 4 && backCover) {
+                                AudioSys.sfx.thud();
+                                backCover.style.transform = 'translateY(160px) rotate(15deg)';
+                                backCover.style.opacity = '0';
+                                UI.log('保護カバー解除');
+                            }
+                        }
+                    }
+                });
+            };
+
+            stageState.onDispMove = (e) => {
+                if (!stageState.dragDisp || !disp) return;
+                const p = getEventPos(e);
+                stageState.dispX = p.x - stageState.dispStartX;
+                stageState.dispY = p.y - stageState.dispStartY;
+                disp.style.transform = `translate(${stageState.dispX}px, ${stageState.dispY}px)`;
+
+                // LOCKEDパネルの左上角の座標
+                const r = disp.getBoundingClientRect();
+                const bladeX = r.left;
+                const bladeY = r.top;
+
+                // 背面の強化ワイヤー切断チェック
+                checkHeavyWireCut(bladeX, bladeY);
+                // （表のワイヤーもLOCKED角で切れる）
+                checkWireSlice(bladeX, bladeY);
+            };
+
+            stageState.onDispUp = () => {
+                stageState.dragDisp = false;
+            };
+
+            document.addEventListener('pointermove', stageState.onDispMove);
+            document.addEventListener('pointerup', stageState.onDispUp);
+
+            // 背面スイッチ操作（カバーが外れた後のみ操作可能）
             const turnSwitchOn = () => {
-                if (stageState.cuts >= 4 && !stageState.power) {
-                    bSw.className = 'switch-on';
+                if (stageState.heavyCuts >= 4 && !stageState.power) {
+                    if (bSw) bSw.className = 'switch-on';
                     if (knob) knob.textContent = 'ON';
                     stageState.power = true;
                     AudioSys.sfx.thud();
                     UI.log('電源オン');
                     UI.btn.classList.remove('disabled');
-                } else if (stageState.cuts < 4) {
+                } else if (stageState.heavyCuts < 4) {
                     AudioSys.sfx.dullClick();
                 }
             };
 
             stageState.swStartY = null;
-            bSw.onpointerdown = (e) => {
-                e.stopPropagation();
-                stageState.swStartY = getEventPos(e).y;
-            };
-            bSw.onpointermove = (e) => {
-                if (stageState.swStartY !== null) {
-                    const dy = getEventPos(e).y - stageState.swStartY;
-                    if (dy < -8) { // 上にスライド
+            if (bSw) {
+                bSw.onpointerdown = (e) => {
+                    e.stopPropagation();
+                    if (stageState.heavyCuts < 4) {
+                        AudioSys.sfx.deflect();
+                        return;
+                    }
+                    stageState.swStartY = getEventPos(e).y;
+                };
+                bSw.onpointermove = (e) => {
+                    if (stageState.swStartY !== null && stageState.heavyCuts >= 4) {
+                        const dy = getEventPos(e).y - stageState.swStartY;
+                        if (dy < -8) { // 上にスライド
+                            turnSwitchOn();
+                            stageState.swStartY = null;
+                        }
+                    }
+                };
+                bSw.onpointerup = (e) => {
+                    if (stageState.swStartY !== null && stageState.heavyCuts >= 4) {
                         turnSwitchOn();
                         stageState.swStartY = null;
                     }
-                }
-            };
-            bSw.onpointerup = (e) => {
-                if (stageState.swStartY !== null) {
-                    turnSwitchOn();
-                    stageState.swStartY = null;
-                }
-            };
+                };
+            }
 
+            // フレーム全体のドラッグ回転（表のワイヤー4本切断後に回転可能）
             stageState.downF = (e) => { 
-                if(e.target.closest('#the-button')) return; 
-                // 4本切断されるまでは回転不可！
-                if(stageState.cuts < 4) return;
+                if (e.target.closest('#the-button')) return; 
+                if (stageState.cuts < 4) return;
                 stageState.sx = getEventPos(e).x; 
                 stageState.dragF = true; 
+                frame.style.transition = 'none';
             };
             stageState.upF = () => { 
+                if (!stageState.dragF) return;
                 stageState.dragF = false; 
                 stageState.rot = stageState.curRot || stageState.rot; 
             };
             stageState.moveF = (e) => { 
-                if(!stageState.dragF || stageState.cuts < 4) return; 
+                if (!stageState.dragF || stageState.cuts < 4) return; 
                 const dx = getEventPos(e).x - stageState.sx; 
                 let ang = stageState.rot + dx * 0.6; 
                 frame.style.transform = `rotateY(${ang}deg)`; 
@@ -1680,7 +1932,7 @@ const STAGES = {
             document.addEventListener('pointermove', stageState.moveF);
         },
         down(e) { 
-            if(stageState.power){ 
+            if (stageState.power) { 
                 UI.btn.classList.add('pressed'); 
                 AudioSys.sfx.click(); 
                 completeStage(); 
@@ -1690,13 +1942,38 @@ const STAGES = {
         },
         up() { UI.btn.classList.remove('pressed'); },
         cleanup() { 
+            document.getElementById('wires-container').style.display = 'none';
+            const backCont = document.getElementById('stage6-back-container');
+            if (backCont) backCont.style.display = 'none';
+            const backCover = document.getElementById('stage6-back-cover');
+            if (backCover) {
+                backCover.style.transform = '';
+                backCover.style.opacity = '1';
+            }
+            const disp = document.getElementById('digital-display');
+            if (disp) {
+                disp.classList.remove('blade-corner');
+                disp.style.transform = '';
+                disp.onpointerdown = null;
+            }
+            const bSw = document.getElementById('back-switch');
+            if (bSw) {
+                bSw.onpointerdown = null;
+                bSw.onpointermove = null;
+                bSw.onpointerup = null;
+            }
+            const heavyWires = document.querySelectorAll('.stage6-heavy-wire');
+            heavyWires.forEach(w => { w.onpointerdown = null; });
+            document.removeEventListener('pointerdown', stageState.onSliceDown); 
+            document.removeEventListener('pointermove', stageState.onSliceMove); 
+            document.removeEventListener('pointerup', stageState.onSliceUp); 
+            document.removeEventListener('pointermove', stageState.onDispMove);
+            document.removeEventListener('pointerup', stageState.onDispUp);
             frame.removeEventListener('pointerdown', stageState.downF); 
             document.removeEventListener('pointerup', stageState.upF); 
             document.removeEventListener('pointermove', stageState.moveF); 
-            document.removeEventListener('pointerdown', stageState.onSliceDown);
-            document.removeEventListener('pointermove', stageState.onSliceMove);
-            document.removeEventListener('pointerup', stageState.onSliceUp);
             frame.style.transform = ''; 
+            UI.btn.classList.remove('disabled'); 
         }
     },
     // 07: CODE (Dial: R1, L2, R1, L2, R2 -> PUSH)
