@@ -1033,6 +1033,128 @@
             border-color: #f59e0b;
             color: #fbbf24;
         }
+
+        /* STATS MODAL (集計ダッシュボード) */
+        #stats-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 13000;
+            background: rgba(3, 7, 18, 0.92);
+            backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center;
+            padding: 16px;
+        }
+        .stats-card {
+            background: #0f172a;
+            border: 2px solid var(--core-cyan);
+            border-radius: 16px;
+            width: 100%; max-width: 520px; max-height: 90vh;
+            display: flex; flex-direction: column;
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.25), inset 0 0 20px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            animation: fadeIn 0.25s ease-out;
+        }
+        .stats-header {
+            padding: 14px 18px;
+            background: rgba(0, 240, 255, 0.08);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .stats-title {
+            font-size: 1.05rem; font-weight: bold;
+            letter-spacing: 1.5px; color: var(--core-cyan);
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+        }
+        .stats-close-btn {
+            background: none; border: 1px solid #475569;
+            color: #94a3b8; width: 28px; height: 28px;
+            border-radius: 50%; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1rem; font-weight: bold;
+            transition: all 0.15s;
+        }
+        .stats-close-btn:hover {
+            border-color: var(--core-cyan); color: #fff;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+        .stats-body {
+            padding: 18px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 16px;
+            color: #e2e8f0;
+        }
+        .stats-summary-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+        }
+        .stats-summary-box {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155; border-radius: 10px;
+            padding: 12px 6px; text-align: center;
+        }
+        .stats-summary-label {
+            font-size: 0.68rem; color: #94a3b8; letter-spacing: 1px; margin-bottom: 4px;
+        }
+        .stats-summary-num {
+            font-size: 1.35rem; font-weight: 900;
+            color: var(--core-cyan);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+            font-family: 'Consolas', monospace;
+        }
+        .stats-section-title {
+            font-size: 0.8rem; font-weight: bold;
+            letter-spacing: 2px; color: #94a3b8;
+            margin-bottom: 8px; border-bottom: 1px solid #1e293b;
+            padding-bottom: 4px;
+        }
+        .stats-stage-list {
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .stats-stage-row {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155; border-radius: 8px;
+            padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;
+        }
+        .stats-stage-row-top {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.8rem;
+        }
+        .stats-stage-name {
+            font-weight: bold; color: #f8fafc; letter-spacing: 1px;
+        }
+        .stats-stage-counts {
+            font-size: 0.75rem; color: #94a3b8; font-family: monospace;
+        }
+        .stats-stage-rate {
+            font-weight: bold; color: var(--led-green); margin-left: 6px;
+        }
+        .stats-bar-bg {
+            width: 100%; height: 6px; background: #020617;
+            border-radius: 3px; overflow: hidden;
+        }
+        .stats-bar-val {
+            height: 100%; background: linear-gradient(90deg, #0284c7, #00f0ff);
+            border-radius: 3px; transition: width 0.5s ease;
+        }
+        .stats-footer {
+            padding: 12px 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 1px solid #1e293b;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .stats-refresh-btn {
+            background: #1e293b; border: 1px solid var(--core-cyan);
+            color: var(--core-cyan); padding: 8px 14px; border-radius: 6px;
+            cursor: pointer; font-size: 0.75rem; font-weight: bold;
+            display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+        }
+        .stats-refresh-btn:hover {
+            background: var(--core-cyan); color: #000;
+        }
+        .stats-toggle-link {
+            margin-top: 14px; background: none; border: none;
+            color: #64748b; font-size: 0.8rem; cursor: pointer;
+            text-decoration: underline; letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+        .stats-toggle-link:hover { color: var(--core-cyan); }
     </style>
 </head>
 <body>
@@ -1133,6 +1255,7 @@
         <div class="start-content">
             <h1 class="start-title">OneButton 2</h1>
             <button id="start-btn" class="digital-btn">スタート</button>
+            <button id="stats-open-btn" class="stats-toggle-link">📊 プレイ統計 / クリア率</button>
         </div>
     </div>
     <div id="clear-screen">
@@ -1143,6 +1266,42 @@
             <div class="clear-divider"></div>
             <p class="clear-thanks">ここまでのプレイありがとうございます</p>
             <button id="retry-btn" class="digital-btn">タイトルへ戻る</button>
+        </div>
+    </div>
+
+    <!-- 集計ダッシュボードモーダル -->
+    <div id="stats-modal">
+        <div class="stats-card">
+            <div class="stats-header">
+                <span class="stats-title">📊 SYSTEM ANALYTICS</span>
+                <button id="stats-close-btn" class="stats-close-btn">✕</button>
+            </div>
+            <div class="stats-body" id="stats-body">
+                <div class="stats-summary-grid">
+                    <div class="stats-summary-box">
+                        <div class="stats-summary-label">総プレイ数</div>
+                        <div class="stats-summary-num" id="stat-total-plays">-</div>
+                    </div>
+                    <div class="stats-summary-box">
+                        <div class="stats-summary-label">脱出クリア</div>
+                        <div class="stats-summary-num" id="stat-total-clears">-</div>
+                    </div>
+                    <div class="stats-summary-box">
+                        <div class="stats-summary-label">総合クリア率</div>
+                        <div class="stats-summary-num" id="stat-clear-rate">-</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="stats-section-title">SECTOR BREAKDOWN / 各セクター突破率</div>
+                    <div class="stats-stage-list" id="stats-stage-list">
+                        <div style="text-align:center; padding: 20px; color:#64748b;">データ読み込み中...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stats-footer">
+                <button id="stats-refresh-btn" class="stats-refresh-btn">🔄 再読み込み</button>
+                <span style="font-size: 0.7rem; color: #64748b;">※リアルタイム集計中</span>
+            </div>
         </div>
     </div>
     <div id="debug-panel">
@@ -1349,8 +1508,24 @@ if (logWrapperEl) {
     }, { passive: true });
 }
 
-// Google Analytics カスタムイベント送信ヘルパー
+// Google Analytics & 登録不要カウンターAPI連携
+const ABACUS_NS = 'onebutton2_rinmarl_v1';
+
+function hitCounter(key) {
+    try {
+        fetch(`https://abacus.jasoncameron.dev/hit/${ABACUS_NS}/${key}`, { mode: 'cors' }).catch(() => {});
+    } catch (e) {}
+}
+
+function getCounter(key) {
+    return fetch(`https://abacus.jasoncameron.dev/get/${ABACUS_NS}/${key}`, { mode: 'cors' })
+        .then(res => res.json())
+        .then(data => (data && typeof data.value === 'number') ? data.value : 0)
+        .catch(() => 0);
+}
+
 function trackEvent(name, params = {}) {
+    // GA4 イベント送信
     try {
         if (typeof gtag === 'function') {
             gtag('event', name, params);
@@ -1358,6 +1533,90 @@ function trackEvent(name, params = {}) {
     } catch (e) {
         console.warn('Analytics event failed:', e);
     }
+
+    // 登録不要カウンターAPIへの自動集計
+    try {
+        if (name === 'game_start') {
+            hitCounter('game_start');
+        } else if (name === 'game_complete') {
+            hitCounter('game_complete');
+        } else if (name === 'stage_start' && params.stage_number) {
+            hitCounter(`s${params.stage_number}_start`);
+        } else if (name === 'stage_clear' && params.stage_number) {
+            hitCounter(`s${params.stage_number}_clear`);
+        }
+    } catch (e) {}
+}
+
+async function loadAndRenderStats() {
+    const listEl = document.getElementById('stats-stage-list');
+    const playsEl = document.getElementById('stat-total-plays');
+    const clearsEl = document.getElementById('stat-total-clears');
+    const rateEl = document.getElementById('stat-clear-rate');
+
+    if (listEl) listEl.innerHTML = '<div style="text-align:center; padding: 24px; color:#64748b;">データ集計中...</div>';
+
+    const keys = ['game_start', 'game_complete'];
+    for (let i = 1; i <= 11; i++) {
+        keys.push(`s${i}_start`);
+        keys.push(`s${i}_clear`);
+    }
+
+    try {
+        const results = await Promise.all(keys.map(k => getCounter(k)));
+        const stats = {};
+        keys.forEach((k, idx) => { stats[k] = results[idx] || 0; });
+
+        const totalPlays = stats['game_start'] || 0;
+        const totalClears = stats['game_complete'] || 0;
+        const overallRate = totalPlays > 0 ? ((totalClears / totalPlays) * 100).toFixed(1) : '0.0';
+
+        if (playsEl) playsEl.textContent = totalPlays.toLocaleString();
+        if (clearsEl) clearsEl.textContent = totalClears.toLocaleString();
+        if (rateEl) rateEl.textContent = `${overallRate}%`;
+
+        if (listEl) {
+            let html = '';
+            for (let i = 1; i <= 11; i++) {
+                const sName = i === 11 ? 'FINAL-B-' : (STAGE_NAMES[i] || `STAGE_${i}`);
+                const starts = stats[`s${i}_start`] || 0;
+                const clears = stats[`s${i}_clear`] || 0;
+                const rate = starts > 0 ? ((clears / starts) * 100).toFixed(1) : '0.0';
+                const barWidth = Math.min(100, Math.max(0, parseFloat(rate)));
+
+                html += `
+                    <div class="stats-stage-row">
+                        <div class="stats-stage-row-top">
+                            <span class="stats-stage-name">SECTOR ${i.toString().padStart(2, '0')}: ${sName}</span>
+                            <div class="stats-stage-counts">
+                                到達: ${starts} / クリア: ${clears}
+                                <span class="stats-stage-rate">(${rate}%)</span>
+                            </div>
+                        </div>
+                        <div class="stats-bar-bg">
+                            <div class="stats-bar-val" style="width: ${barWidth}%;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            listEl.innerHTML = html;
+        }
+    } catch (e) {
+        if (listEl) listEl.innerHTML = '<div style="text-align:center; padding: 24px; color:#ef4444;">データの取得に失敗しました。再試行してください。</div>';
+    }
+}
+
+function showStatsModal() {
+    const modal = document.getElementById('stats-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        loadAndRenderStats();
+    }
+}
+
+function hideStatsModal() {
+    const modal = document.getElementById('stats-modal');
+    if (modal) modal.style.display = 'none';
 }
 
 function completeStage() {
@@ -3331,6 +3590,27 @@ window.onload = () => {
     if (urlParams.has('stage')) {
         document.getElementById('start-screen').style.display='none';
         currentStage = parseInt(urlParams.get('stage')) || 1; loadStage(currentStage);
+    }
+
+    // 統計モーダル イベント登録
+    const statsOpenBtn = document.getElementById('stats-open-btn');
+    if (statsOpenBtn) statsOpenBtn.onclick = showStatsModal;
+
+    const statsCloseBtn = document.getElementById('stats-close-btn');
+    if (statsCloseBtn) statsCloseBtn.onclick = hideStatsModal;
+
+    const statsRefreshBtn = document.getElementById('stats-refresh-btn');
+    if (statsRefreshBtn) statsRefreshBtn.onclick = loadAndRenderStats;
+
+    const statsModal = document.getElementById('stats-modal');
+    if (statsModal) {
+        statsModal.onclick = (e) => {
+            if (e.target === statsModal) hideStatsModal();
+        };
+    }
+
+    if (urlParams.has('stats') || urlParams.has('admin')) {
+        showStatsModal();
     }
 };
 </script>
