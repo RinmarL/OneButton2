@@ -1148,13 +1148,6 @@
         .stats-refresh-btn:hover {
             background: var(--core-cyan); color: #000;
         }
-        .stats-toggle-link {
-            margin-top: 14px; background: none; border: none;
-            color: #64748b; font-size: 0.8rem; cursor: pointer;
-            text-decoration: underline; letter-spacing: 1px;
-            transition: color 0.2s;
-        }
-        .stats-toggle-link:hover { color: var(--core-cyan); }
     </style>
 </head>
 <body>
@@ -1253,9 +1246,8 @@
     <div id="sector-intro"></div>
     <div id="start-screen">
         <div class="start-content">
-            <h1 class="start-title">OneButton 2</h1>
+            <h1 class="start-title" id="start-title">OneButton 2</h1>
             <button id="start-btn" class="digital-btn">スタート</button>
-            <button id="stats-open-btn" class="stats-toggle-link">📊 プレイ統計 / クリア率</button>
         </div>
     </div>
     <div id="clear-screen">
@@ -3553,6 +3545,8 @@ function initDebugPanel() {
             jumpToStage(currentStage);
         } else if (key === 'D') {
             toggle();
+        } else if (key === 'S') {
+            showStatsModal();
         }
     });
 }
@@ -3592,9 +3586,22 @@ window.onload = () => {
         currentStage = parseInt(urlParams.get('stage')) || 1; loadStage(currentStage);
     }
 
-    // 統計モーダル イベント登録
-    const statsOpenBtn = document.getElementById('stats-open-btn');
-    if (statsOpenBtn) statsOpenBtn.onclick = showStatsModal;
+    // 統計モーダル: タイトルロゴ5回連続タップで開く隠しコマンド（スマホ＆PC対応）
+    const titleEl = document.getElementById('start-title');
+    if (titleEl) {
+        let tapCount = 0;
+        let tapTimer = null;
+        titleEl.addEventListener('pointerdown', () => {
+            tapCount++;
+            clearTimeout(tapTimer);
+            if (tapCount >= 5) {
+                tapCount = 0;
+                showStatsModal();
+            } else {
+                tapTimer = setTimeout(() => { tapCount = 0; }, 1500);
+            }
+        });
+    }
 
     const statsCloseBtn = document.getElementById('stats-close-btn');
     if (statsCloseBtn) statsCloseBtn.onclick = hideStatsModal;
