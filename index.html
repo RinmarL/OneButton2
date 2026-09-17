@@ -1349,11 +1349,27 @@ if (logWrapperEl) {
     }, { passive: true });
 }
 
+// Google Analytics カスタムイベント送信ヘルパー
+function trackEvent(name, params = {}) {
+    try {
+        if (typeof gtag === 'function') {
+            gtag('event', name, params);
+        }
+    } catch (e) {
+        console.warn('Analytics event failed:', e);
+    }
+}
+
 function completeStage() {
     if (stageTransitioning) return; stageTransitioning = true;
     AudioSys.sfx.success(); UI.log('ステージクリア。');
     UI.leds.forEach((_, idx) => UI.setLED(idx, 'green'));
     UI.btn.style.pointerEvents = 'none';
+
+    // ステージクリアイベント
+    const clearStageName = currentStage === 11 ? "FINAL-B-" : (STAGE_NAMES[currentStage] || `STAGE_${currentStage}`);
+    trackEvent('stage_clear', { stage_number: currentStage, stage_name: clearStageName });
+
     const disp = document.getElementById('digital-display'); const dispText = document.getElementById('display-front-text');
     if (dispText) { dispText.textContent = 'OPEN'; dispText.classList.add('open'); } if (disp) disp.classList.add('open');
     setTimeout(() => {
@@ -1363,6 +1379,8 @@ function completeStage() {
                 document.getElementById('clear-screen').style.display = 'flex';
                 document.getElementById('transition-overlay').style.opacity = '0';
                 AudioSys.sfx.gameClear();
+                // 全ステージクリアイベント
+                trackEvent('game_complete');
                 return;
             }
             if(STAGES[currentStage].cleanup) STAGES[currentStage].cleanup();
@@ -1377,6 +1395,9 @@ function loadStage(num) {
     UI.leds.forEach(l => { if(l){ l.style.cursor='default'; l.onpointerdown=null; l.style.backgroundColor=''; l.style.boxShadow=''; } });
     const sName = num === 11 ? "FINAL-B-" : STAGE_NAMES[num]; UI.sectorDisp.innerHTML = num === 11 ? `SECT<span id="char-o1" class="char-target">O</span>R EX FINAL<span id="drag-blade" class="blade-target"><span class="hyphen-blade">-</span>B<span class="hyphen-blade">-</span></span>` : `SECT<span id="char-o1" class="char-target">O</span>R ${num.toString().padStart(2, '0')} ${sName}`;
     UI.log(num === 11 ? `セクター EX をロード中...` : `セクター ${num} をロード中...`);
+
+    // ステージ開始イベント
+    trackEvent('stage_start', { stage_number: num, stage_name: sName });
     const l4 = document.getElementById('led-4'); const l5 = document.getElementById('led-5');
     if (num === 11) { if(l4) l4.style.display='block'; if(l5) l5.style.display='block'; }
     else { if(l4) l4.style.display='none'; if(l5) l5.style.display='none'; }
@@ -3281,6 +3302,7 @@ window.onload = () => {
     initDebugPanel();
     document.getElementById('start-btn').onclick = () => {
         AudioSys.init(); AudioSys.sfx.uiClick();
+        trackEvent('game_start');
         document.getElementById('start-screen').style.opacity = '0';
         setTimeout(() => { document.getElementById('start-screen').style.display = 'none'; loadStage(1); }, 500);
     };
@@ -3289,6 +3311,7 @@ window.onload = () => {
     window.showClearScreen = () => {
         AudioSys.init();
         AudioSys.sfx.gameClear();
+        trackEvent('game_complete');
         const cs = document.getElementById('clear-screen');
         const ss = document.getElementById('start-screen');
         const to = document.getElementById('transition-overlay');

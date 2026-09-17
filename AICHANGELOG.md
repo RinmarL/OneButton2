@@ -900,6 +900,12 @@
   - `#debug-panel` に `display: none !important;` を指定し、画面上からデバッグ用UIを非表示にしました。
 - **Google Analytics（gtag.js）タグの設置**:
   - アクセス解析用タグ（`G-31GRSX0NXJ`）を `<head>` 内に埋め込みました。
+- **ゲームプレイ数・クリア率集計用カスタムイベントの実装**:
+  - `game_start`: タイトル画面で「スタート」押下時
+  - `stage_start`: 各セクター読み込み時（ステージ番号・ステージ名付き）
+  - `stage_clear`: 各セクタークリア時（ステージ番号・ステージ名付き）
+  - `game_complete`: 全ステージクリア（クリア画面表示）時
+
 
 
 
